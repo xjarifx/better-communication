@@ -1,11 +1,11 @@
 # Better Communication — Technical Specification & Implementation Plan
 
-| Document | |
-|---|---|
-| Status | **Draft** |
-| Author | Engineering Team |
-| Version | 1.0 |
-| Last Updated | 2026-05-23 |
+| Document     |                  |
+| ------------ | ---------------- |
+| Status       | **Draft**        |
+| Author       | Engineering Team |
+| Version      | 1.0              |
+| Last Updated | 2026-05-23       |
 
 ---
 
@@ -34,6 +34,7 @@
 **Better Communication** is a real-time messaging and video calling application supporting both 1:1 (direct) and N:N (group) conversations. This document serves as the technical specification for the Minimum Viable Product (MVP) — the smallest feature set that delivers core value to users.
 
 **MVP Success Criteria:**
+
 - A user can register and authenticate
 - A user can create and join conversations (1:1 and group)
 - Messages deliver in real time
@@ -44,18 +45,18 @@
 
 ## 2. Glossary
 
-| Term | Definition |
-|---|---|
-| **Access Token** | Short-lived JWT (15 min) sent as `Authorization: Bearer` header |
-| **Conversation** | A chat session between 2+ users; can be DIRECT (1:1) or GROUP (N:N) |
-| **Daily.co** | Third-party video API; provides room-based video calls via pre-built UI |
-| **ImageKit** | Third-party media optimization & upload service; handles image resizing, thumbnails |
-| **MVP** | Minimum Viable Product — smallest feature set that provides value and enables feedback |
-| **Neon** | Serverless PostgreSQL provider with connection pooling |
-| **Prisma** | Type-safe ORM for database access; generates TypeScript types from schema |
-| **Room (Socket.IO)** | Server-side channel; users in the same room receive each other's events |
-| **Room (Daily.co)** | Virtual video call space identified by a URL; participants join via browser |
-| **Zod** | Runtime schema validation library; infers TypeScript types from validation schemas |
+| Term                 | Definition                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| **Access Token**     | Short-lived JWT (15 min) sent as `Authorization: Bearer` header                        |
+| **Conversation**     | A chat session between 2+ users; can be DIRECT (1:1) or GROUP (N:N)                    |
+| **Daily.co**         | Third-party video API; provides room-based video calls via pre-built UI                |
+| **ImageKit**         | Third-party media optimization & upload service; handles image resizing, thumbnails    |
+| **MVP**              | Minimum Viable Product — smallest feature set that provides value and enables feedback |
+| **Neon**             | Serverless PostgreSQL provider with connection pooling                                 |
+| **Prisma**           | Type-safe ORM for database access; generates TypeScript types from schema              |
+| **Room (Socket.IO)** | Server-side channel; users in the same room receive each other's events                |
+| **Room (Daily.co)**  | Virtual video call space identified by a URL; participants join via browser            |
+| **Zod**              | Runtime schema validation library; infers TypeScript types from validation schemas     |
 
 ---
 
@@ -140,30 +141,30 @@ Socket.IO Server
 
 ## 4. Technology Stack
 
-| Layer | Technology | Version | Purpose |
-|---|---|---|---|
-| **Runtime** | Node.js | ≥20 | JavaScript runtime |
-| **Web Framework** | Next.js | 16.2.6 | App Router, API routes, SSR |
-| **Language** | TypeScript | 5.x | Type safety across the stack |
-| **Database** | PostgreSQL (Neon) | — | Relational data store |
-| **ORM** | Prisma | 7.8.0 | Type-safe database access |
-| **Auth** | jsonwebtoken (JWT) | 9.x | Bearer token authentication |
-| **Validation** | Zod | 4.x | Runtime input validation |
-| **Real-time** | Socket.IO | 4.x | Bidirectional event-based communication |
-| **Video** | Daily.co | — | Room-based video calling |
-| **Media** | ImageKit | — | Image upload, optimization, thumbnails |
-| **Styling** | Tailwind CSS | 4.x | Utility-first CSS framework |
-| **Password** | bcrypt | 6.x | Password hashing |
+| Layer             | Technology         | Version | Purpose                                 |
+| ----------------- | ------------------ | ------- | --------------------------------------- |
+| **Runtime**       | Node.js            | ≥20     | JavaScript runtime                      |
+| **Web Framework** | Next.js            | 16.2.6  | App Router, API routes, SSR             |
+| **Language**      | TypeScript         | 5.x     | Type safety across the stack            |
+| **Database**      | PostgreSQL (Neon)  | —       | Relational data store                   |
+| **ORM**           | Prisma             | 7.8.0   | Type-safe database access               |
+| **Auth**          | jsonwebtoken (JWT) | 9.x     | Bearer token authentication             |
+| **Validation**    | Zod                | 4.x     | Runtime input validation                |
+| **Real-time**     | Socket.IO          | 4.x     | Bidirectional event-based communication |
+| **Video**         | Daily.co           | —       | Room-based video calling                |
+| **Media**         | ImageKit           | —       | Image upload, optimization, thumbnails  |
+| **Styling**       | Tailwind CSS       | 4.x     | Utility-first CSS framework             |
+| **Password**      | bcrypt             | 6.x     | Password hashing                        |
 
 ### 4.1 Development Dependencies
 
-| Package | Purpose |
-|---|---|
-| `prettier` + `prettier-plugin-tailwindcss` | Code formatting |
-| `eslint` + `eslint-config-next` | Linting |
-| `prisma` | Schema migrations, client generation |
-| `dotenv` | Local environment variables |
-| `concurrently` (recommended) | Run Next.js + Socket.IO together |
+| Package                                    | Purpose                              |
+| ------------------------------------------ | ------------------------------------ |
+| `prettier` + `prettier-plugin-tailwindcss` | Code formatting                      |
+| `eslint` + `eslint-config-next`            | Linting                              |
+| `prisma`                                   | Schema migrations, client generation |
+| `dotenv`                                   | Local environment variables          |
+| `concurrently` (recommended)               | Run Next.js + Socket.IO together     |
 
 ### 4.2 Environment Variables
 
@@ -193,41 +194,41 @@ NODE_ENV              "development" | "production" | "test"
 
 ### ADR-001: Separate Socket.IO Server
 
-| Field | Value |
-|---|---|
-| **Context** | Need real-time bidirectional communication |
-| **Decision** | Run Socket.IO as a standalone process, not embedded in Next.js |
-| **Rationale** | Next.js API routes are serverless functions — they boot per-request and cannot hold persistent TCP connections. Socket.IO requires a long-running process with in-memory state (connected clients, rooms). |
-| **Consequence** | Must manage two processes in development; need a proxy or different port |
-| **Alternative** | Embedding Socket.IO in a Next.js custom server (`server.ts`) — rejected because it bypasses App Router optimizations |
+| Field           | Value                                                                                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need real-time bidirectional communication                                                                                                                                                                 |
+| **Decision**    | Run Socket.IO as a standalone process, not embedded in Next.js                                                                                                                                             |
+| **Rationale**   | Next.js API routes are serverless functions — they boot per-request and cannot hold persistent TCP connections. Socket.IO requires a long-running process with in-memory state (connected clients, rooms). |
+| **Consequence** | Must manage two processes in development; need a proxy or different port                                                                                                                                   |
+| **Alternative** | Embedding Socket.IO in a Next.js custom server (`server.ts`) — rejected because it bypasses App Router optimizations                                                                                       |
 
 ### ADR-002: JWT-Only Auth (No Refresh Tokens)
 
-| Field | Value |
-|---|---|
-| **Context** | Need to authenticate API requests and WebSocket connections |
-| **Decision** | Issue short-lived JWTs (15 min) without refresh tokens |
-| **Rationale** | Eliminates refresh token storage/rotation complexity. Acceptable for an MVP — on token expiry, the user re-authenticates. Reduces database load (no refresh token table to query). |
-| **Consequence** | Users may need to log in more frequently; can add refresh tokens post-MVP if UX becomes a problem |
-| **Alternative** | OAuth2 with refresh tokens — more standard but over-engineered for MVP |
+| Field           | Value                                                                                                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need to authenticate API requests and WebSocket connections                                                                                                                        |
+| **Decision**    | Issue short-lived JWTs (15 min) without refresh tokens                                                                                                                             |
+| **Rationale**   | Eliminates refresh token storage/rotation complexity. Acceptable for an MVP — on token expiry, the user re-authenticates. Reduces database load (no refresh token table to query). |
+| **Consequence** | Users may need to log in more frequently; can add refresh tokens post-MVP if UX becomes a problem                                                                                  |
+| **Alternative** | OAuth2 with refresh tokens — more standard but over-engineered for MVP                                                                                                             |
 
 ### ADR-003: Daily.co Pre-built UI for Video
 
-| Field | Value |
-|---|---|
-| **Context** | Need video calling capability |
-| **Decision** | Use Daily.co pre-built UI components instead of raw WebRTC |
-| **Rationale** | WebRTC requires STUN/TURN server management, signaling, ICE negotiation, and complex state management. Daily.co abstracts all of this. Pre-built UI provides camera/mic controls, screen sharing, participant grid in under 100 lines of React code. |
-| **Consequence** | Vendor lock-in; external API dependency. Acceptable for MVP — can migrate to custom WebRTC later if needed |
+| Field           | Value                                                                                                                                                                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need video calling capability                                                                                                                                                                                                                        |
+| **Decision**    | Use Daily.co pre-built UI components instead of raw WebRTC                                                                                                                                                                                           |
+| **Rationale**   | WebRTC requires STUN/TURN server management, signaling, ICE negotiation, and complex state management. Daily.co abstracts all of this. Pre-built UI provides camera/mic controls, screen sharing, participant grid in under 100 lines of React code. |
+| **Consequence** | Vendor lock-in; external API dependency. Acceptable for MVP — can migrate to custom WebRTC later if needed                                                                                                                                           |
 
 ### ADR-004: Cursor-Based Pagination for Messages
 
-| Field | Value |
-|---|---|
-| **Context** | Need to paginate potentially thousands of messages per conversation |
-| **Decision** | Use cursor-based (keyset) pagination over offset-based |
-| **Rationale** | Offset pagination becomes unstable when new rows are inserted (duplicates, skips). Cursor pagination uses `WHERE createdAt < :cursor` — stable even with concurrent inserts, and indexes efficiently. |
-| **Consequence** | Slightly more complex query logic; no "page 2" semantics (only "load more") |
+| Field           | Value                                                                                                                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need to paginate potentially thousands of messages per conversation                                                                                                                                   |
+| **Decision**    | Use cursor-based (keyset) pagination over offset-based                                                                                                                                                |
+| **Rationale**   | Offset pagination becomes unstable when new rows are inserted (duplicates, skips). Cursor pagination uses `WHERE createdAt < :cursor` — stable even with concurrent inserts, and indexes efficiently. |
+| **Consequence** | Slightly more complex query logic; no "page 2" semantics (only "load more")                                                                                                                           |
 
 ---
 
@@ -288,6 +289,7 @@ The following models are already defined in `prisma/schema.prisma`:
 ### 6.3 Future-Proofing Fields
 
 Added when needed (not required for initial schema):
+
 - `Message.replyToId?: String` — references another message for reply chains
 - `Message.editedAt?: DateTime` — tracks edits; null means never edited
 - `ConversationMember.role?: String` — "admin" / "member" for group management
@@ -324,27 +326,30 @@ Protected endpoints return `401 Unauthorized` when the token is missing or expir
 Creates a new user account.
 
 **Request Body:**
+
 ```typescript
 {
-  email: string;          // Valid email format
-  password: string;       // 8-128 characters
-  displayName: string;    // 1-50 characters
+  email: string; // Valid email format
+  password: string; // 8-128 characters
+  displayName: string; // 1-50 characters
 }
 ```
 
 **Success Response** `201 Created`:
+
 ```typescript
 {
   user: {
     id: string;
     email: string;
     displayName: string;
-  };
-  accessToken: string;    // JWT, expires in 15m
+  }
+  accessToken: string; // JWT, expires in 15m
 }
 ```
 
 **Error Responses:**
+
 - `400` — Validation failed (malformed input)
 - `409` — Email already in use
 
@@ -353,6 +358,7 @@ Creates a new user account.
 Authenticates an existing user.
 
 **Request Body:**
+
 ```typescript
 {
   email: string;
@@ -361,18 +367,20 @@ Authenticates an existing user.
 ```
 
 **Success Response** `200 OK`:
+
 ```typescript
 {
   user: {
     id: string;
     email: string;
     displayName: string;
-  };
+  }
   accessToken: string;
 }
 ```
 
 **Error Responses:**
+
 - `400` — Validation failed
 - `401` — Invalid email or password
 
@@ -385,6 +393,7 @@ Lists all conversations the authenticated user belongs to.
 **Query Parameters:** (none for MVP)
 
 **Response** `200 OK`:
+
 ```typescript
 ConversationSummary[];    // Ordered by most recent activity
 ```
@@ -410,6 +419,7 @@ interface ConversationSummary {
 Creates a new conversation.
 
 **Request Body:**
+
 ```typescript
 {
   type: "DIRECT" | "GROUP";
@@ -421,6 +431,7 @@ Creates a new conversation.
 **Response** `201 Created`: The full `Conversation` object with members.
 
 **Validation Rules:**
+
 - DIRECT conversations: `memberIds.length === 1`
 - GROUP conversations: `memberIds.length >= 1`, `name` is required
 - Duplicate conversation detection: if a DIRECT conversation between the same two users exists, return it instead of creating a new one
@@ -446,6 +457,7 @@ Deletes a conversation (soft or hard). Available only to conversation members.
 Fetches paginated messages for a conversation.
 
 **Query Parameters:**
+
 ```typescript
 {
   cursor?: string;    // ISO timestamp of the oldest loaded message
@@ -454,6 +466,7 @@ Fetches paginated messages for a conversation.
 ```
 
 **Response** `200 OK`:
+
 ```typescript
 {
   messages: Message[];
@@ -485,6 +498,7 @@ interface Message {
 Sends a message via HTTP (fallback for when WebSocket is unavailable).
 
 **Request Body:**
+
 ```typescript
 {
   type: "TEXT" | "IMAGE" | "FILE";
@@ -499,6 +513,7 @@ Sends a message via HTTP (fallback for when WebSocket is unavailable).
 **Response** `201 Created`: The full `Message` object.
 
 **Implementation Note:** The Socket.IO event `message:send` is the primary path for message delivery. This HTTP endpoint exists as:
+
 1. A fallback when WebSocket fails
 2. A mechanism for file uploads where multipart is needed
 
@@ -507,9 +522,10 @@ Sends a message via HTTP (fallback for when WebSocket is unavailable).
 Edits a message. Only the sender can edit their own message.
 
 **Request Body:**
+
 ```typescript
 {
-  content: string;    // New content
+  content: string; // New content
 }
 ```
 
@@ -530,17 +546,19 @@ Deletes a message. Only the sender can delete.
 Uploads a file to ImageKit.
 
 **Request Body:** `multipart/form-data`
+
 ```typescript
 {
-  file: File;    // Image or file to upload
+  file: File; // Image or file to upload
 }
 ```
 
 **Response** `201 Created`:
+
 ```typescript
 {
   url: string;
-  thumbnailUrl: string;     // ImageKit auto-generated thumbnail
+  thumbnailUrl: string; // ImageKit auto-generated thumbnail
   fileName: string;
   fileSize: number;
 }
@@ -553,13 +571,15 @@ Uploads a file to ImageKit.
 Creates a Daily.co room for video calling.
 
 **Request Body:**
+
 ```typescript
 {
-  conversationId: string;   // Link the call to a conversation
+  conversationId: string; // Link the call to a conversation
 }
 ```
 
 **Response** `201 Created`:
+
 ```typescript
 {
   roomUrl: string;
@@ -572,11 +592,12 @@ Creates a Daily.co room for video calling.
 Gets the status of a Daily.co room.
 
 **Response** `200 OK`:
+
 ```typescript
 {
   roomUrl: string;
   roomName: string;
-  active: boolean;    // Whether participants are currently in the call
+  active: boolean; // Whether participants are currently in the call
 }
 ```
 
@@ -599,6 +620,7 @@ Client                              Socket.IO Server
 ```
 
 **Connection Details:**
+
 - Transport: WebSocket (`wss://`) with long-polling fallback
 - Auth token sent in `auth.token` during handshake
 - Server validates JWT on connection; rejects with `401` if invalid
@@ -609,30 +631,30 @@ Client                              Socket.IO Server
 
 #### Client → Server Events
 
-| Event | Payload | Description |
-|---|---|---|
-| `message:send` | `{ conversationId, type, content?, fileUrl?, thumbnailUrl?, fileName?, fileSize? }` | Send a new message |
-| `message:edit` | `{ messageId, content }` | Edit an existing message |
-| `message:delete` | `{ messageId }` | Delete a message |
-| `conversation:join` | `{ conversationId }` | Join a conversation room |
-| `conversation:leave` | `{ conversationId }` | Leave a conversation room |
-| `user:typing` | `{ conversationId }` | User started typing |
-| `user:stop-typing` | `{ conversationId }` | User stopped typing |
-| `call:start` | `{ conversationId, roomUrl }` | Notify room of incoming call |
-| `call:end` | `{ conversationId }` | Notify room call ended |
+| Event                | Payload                                                                             | Description                  |
+| -------------------- | ----------------------------------------------------------------------------------- | ---------------------------- |
+| `message:send`       | `{ conversationId, type, content?, fileUrl?, thumbnailUrl?, fileName?, fileSize? }` | Send a new message           |
+| `message:edit`       | `{ messageId, content }`                                                            | Edit an existing message     |
+| `message:delete`     | `{ messageId }`                                                                     | Delete a message             |
+| `conversation:join`  | `{ conversationId }`                                                                | Join a conversation room     |
+| `conversation:leave` | `{ conversationId }`                                                                | Leave a conversation room    |
+| `user:typing`        | `{ conversationId }`                                                                | User started typing          |
+| `user:stop-typing`   | `{ conversationId }`                                                                | User stopped typing          |
+| `call:start`         | `{ conversationId, roomUrl }`                                                       | Notify room of incoming call |
+| `call:end`           | `{ conversationId }`                                                                | Notify room call ended       |
 
 #### Server → Client Events
 
-| Event | Payload | Description |
-|---|---|---|
-| `message:new` | `Message` (full object) | New message broadcast to room |
-| `message:updated` | `Message` | Edited message broadcast |
-| `message:deleted` | `{ messageId, conversationId }` | Deletion notification |
-| `user:typing` | `{ userId, conversationId, displayName }` | Typing indicator |
-| `user:stop-typing` | `{ userId, conversationId }` | Stop typing indicator |
-| `user:online` | `{ userId, online: boolean }` | Online status change |
-| `call:incoming` | `{ conversationId, roomUrl, callerId, callerName }` | Incoming call notification |
-| `call:ended` | `{ conversationId }` | Call ended notification |
+| Event              | Payload                                             | Description                   |
+| ------------------ | --------------------------------------------------- | ----------------------------- |
+| `message:new`      | `Message` (full object)                             | New message broadcast to room |
+| `message:updated`  | `Message`                                           | Edited message broadcast      |
+| `message:deleted`  | `{ messageId, conversationId }`                     | Deletion notification         |
+| `user:typing`      | `{ userId, conversationId, displayName }`           | Typing indicator              |
+| `user:stop-typing` | `{ userId, conversationId }`                        | Stop typing indicator         |
+| `user:online`      | `{ userId, online: boolean }`                       | Online status change          |
+| `call:incoming`    | `{ conversationId, roomUrl, callerId, callerName }` | Incoming call notification    |
+| `call:ended`       | `{ conversationId }`                                | Call ended notification       |
 
 ### 8.3 Message Delivery Flow
 
@@ -738,14 +760,14 @@ io.use((socket, next) => {
 
 ### 9.3 Authorization Rules
 
-| Resource | Rule |
-|---|---|
-| Conversation (view) | User must be a member |
-| Conversation (create) | Any authenticated user |
-| Conversation (delete) | Any member |
-| Message (create) | User must be member of the conversation |
-| Message (edit) | Only the sender |
-| Message (delete) | Only the sender |
+| Resource              | Rule                                    |
+| --------------------- | --------------------------------------- |
+| Conversation (view)   | User must be a member                   |
+| Conversation (create) | Any authenticated user                  |
+| Conversation (delete) | Any member                              |
+| Message (create)      | User must be member of the conversation |
+| Message (edit)        | Only the sender                         |
+| Message (delete)      | Only the sender                         |
 
 ---
 
@@ -893,18 +915,18 @@ Caller Client           Next.js          Daily.co API        Socket.IO        Re
 
 State is managed via React Context + custom hooks — no external state library for MVP.
 
-| Context | State | Purpose |
-|---|---|---|
-| `AuthProvider` | `user`, `accessToken`, `isLoading` | Auth state across the app |
-| `SocketProvider` | `socket` (SocketIO.Client), `isConnected` | WebSocket connection |
+| Context          | State                                     | Purpose                   |
+| ---------------- | ----------------------------------------- | ------------------------- |
+| `AuthProvider`   | `user`, `accessToken`, `isLoading`        | Auth state across the app |
+| `SocketProvider` | `socket` (SocketIO.Client), `isConnected` | WebSocket connection      |
 
 Custom hooks encapsulate data fetching and caching:
 
-| Hook | Data Source | Caching |
-|---|---|---|
-| `useAuth()` | AuthProvider context | In-memory (token) |
-| `useSocket()` | SocketProvider context | Persistent connection |
-| `useConversations()` | HTTP GET + Socket.IO events | In-memory array, updated via events |
+| Hook                          | Data Source                             | Caching                              |
+| ----------------------------- | --------------------------------------- | ------------------------------------ |
+| `useAuth()`                   | AuthProvider context                    | In-memory (token)                    |
+| `useSocket()`                 | SocketProvider context                  | Persistent connection                |
+| `useConversations()`          | HTTP GET + Socket.IO events             | In-memory array, updated via events  |
 | `useMessages(conversationId)` | HTTP GET (paginated) + Socket.IO events | In-memory array, appended via events |
 
 ---
@@ -1042,6 +1064,7 @@ better-communication/
 - [x] Prisma schema (User model)
 
 **Remaining:**
+
 - [ ] Login page UI
 - [ ] Register page UI
 - [ ] AuthProvider (React context)
@@ -1130,16 +1153,16 @@ better-communication/
 
 ## 14. Risk Register
 
-| ID | Risk | Probability | Impact | Mitigation |
-|---|---|---|---|---|
-| R1 | JWT secret leaked | Low | Critical | Store in environment variable, rotate immediately if compromised; never commit to version control |
-| R2 | Socket.IO server crashes | Low | High | Auto-restart via process manager (PM2 / Docker restart policy); messages also persisted via HTTP fallback |
-| R3 | Database connection pool exhaustion | Medium | High | Prisma handles pooling via Neon adapter; monitor connection count; set connection limit in Prisma config |
-| R4 | ImageKit API rate limit | Low | Medium | Implement client-side file size limits; queue uploads if needed |
-| R5 | Daily.co API outage | Low | Medium | Show "Video call unavailable" gracefully; chat remains functional |
-| R6 | WebSocket connection drops (mobile) | High | Low | Socket.IO auto-reconnects with exponential backoff; queued messages resent on reconnect |
-| R7 | SQL injection via message content | Low | Critical | Prisma parameterizes all queries; Zod validates input shape; never concatenate user input into SQL |
-| R8 | XSS via message content | Medium | High | React escapes HTML by default; sanitize any raw HTML rendering with DOMPurify if needed |
+| ID  | Risk                                | Probability | Impact   | Mitigation                                                                                                |
+| --- | ----------------------------------- | ----------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| R1  | JWT secret leaked                   | Low         | Critical | Store in environment variable, rotate immediately if compromised; never commit to version control         |
+| R2  | Socket.IO server crashes            | Low         | High     | Auto-restart via process manager (PM2 / Docker restart policy); messages also persisted via HTTP fallback |
+| R3  | Database connection pool exhaustion | Medium      | High     | Prisma handles pooling via Neon adapter; monitor connection count; set connection limit in Prisma config  |
+| R4  | ImageKit API rate limit             | Low         | Medium   | Implement client-side file size limits; queue uploads if needed                                           |
+| R5  | Daily.co API outage                 | Low         | Medium   | Show "Video call unavailable" gracefully; chat remains functional                                         |
+| R6  | WebSocket connection drops (mobile) | High        | Low      | Socket.IO auto-reconnects with exponential backoff; queued messages resent on reconnect                   |
+| R7  | SQL injection via message content   | Low         | Critical | Prisma parameterizes all queries; Zod validates input shape; never concatenate user input into SQL        |
+| R8  | XSS via message content             | Medium      | High     | React escapes HTML by default; sanitize any raw HTML rendering with DOMPurify if needed                   |
 
 ---
 
@@ -1147,19 +1170,19 @@ better-communication/
 
 ### Explicitly Out of Scope (MVP)
 
-| Feature | Rationale | Future Priority |
-|---|---|---|
-| Push notifications | Requires native app or service worker setup; not essential for web MVP | High |
-| End-to-end encryption | Adds significant implementation and key management complexity | Low |
-| Message search | Requires full-text search index or Elasticsearch | Medium |
-| Read receipts | Per-message read tracking adds DB complexity | Low |
-| Rate limiting | Essential for production but not for MVP testing | High |
-| CI/CD pipeline | Local development only for MVP | Medium |
-| Mobile native apps | PWA is sufficient for MVP | Low |
-| Voice calls | Video calls cover the real-time communication need | Low |
-| File type restrictions (video, etc.) | Accept all types for MVP; restrict later | Low |
-| Admin panel | No administrative features in MVP | Low |
-| Multi-device sessions | One session at a time is acceptable for MVP | Medium |
+| Feature                              | Rationale                                                              | Future Priority |
+| ------------------------------------ | ---------------------------------------------------------------------- | --------------- |
+| Push notifications                   | Requires native app or service worker setup; not essential for web MVP | High            |
+| End-to-end encryption                | Adds significant implementation and key management complexity          | Low             |
+| Message search                       | Requires full-text search index or Elasticsearch                       | Medium          |
+| Read receipts                        | Per-message read tracking adds DB complexity                           | Low             |
+| Rate limiting                        | Essential for production but not for MVP testing                       | High            |
+| CI/CD pipeline                       | Local development only for MVP                                         | Medium          |
+| Mobile native apps                   | PWA is sufficient for MVP                                              | Low             |
+| Voice calls                          | Video calls cover the real-time communication need                     | Low             |
+| File type restrictions (video, etc.) | Accept all types for MVP; restrict later                               | Low             |
+| Admin panel                          | No administrative features in MVP                                      | Low             |
+| Multi-device sessions                | One session at a time is acceptable for MVP                            | Medium          |
 
 ### Technical Debt to Track
 
