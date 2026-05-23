@@ -1,6 +1,6 @@
 import { NODE_ENV } from "./env";
 
-export const COOKIE_NAME = "cookie-name";
+export const COOKIE_NAME = "refreshToken";
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
