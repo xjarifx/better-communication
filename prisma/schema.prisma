@@ -30,7 +30,6 @@ model User {
   // Relations
   memberships         ConversationMember[]
   sentMessages        Message[]
-  refreshTokens       RefreshToken[]
 
   @@map("users")
 }
@@ -84,17 +83,4 @@ model Message {
 
   @@index([conversationId, createdAt(sort: Desc)])
   @@map("messages")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
-  tokenHash String   @unique // SHA-256 hash of the generated secure token
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("refresh_tokens")
 }

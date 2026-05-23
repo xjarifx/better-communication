@@ -15,9 +15,6 @@ export const DATABASE_URL = required("DATABASE_URL");
 export const ACCESS_TOKEN_SECRET = required("ACCESS_TOKEN_SECRET");
 export const ACCESS_TOKEN_EXPIRES_IN = required("ACCESS_TOKEN_EXPIRES_IN");
 
-export const REFRESH_TOKEN_SECRET = required("REFRESH_TOKEN_SECRET");
-export const REFRESH_TOKEN_EXPIRES_IN = required("REFRESH_TOKEN_EXPIRES_IN");
-
 export const IMAGEKIT_PUBLIC_KEY = required("IMAGEKIT_PUBLIC_KEY");
 export const IMAGEKIT_PRIVATE_KEY = required("IMAGEKIT_PRIVATE_KEY");
 export const IMAGEKIT_URL_ENDPOINT = required("IMAGEKIT_URL_ENDPOINT");

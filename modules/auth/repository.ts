@@ -11,11 +11,3 @@ export async function createUser(data: {
 }) {
   return prisma.user.create({ data });
 }
-
-export async function createRefreshToken(data: {
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-}) {
-  return prisma.refreshToken.create({ data });
-}
