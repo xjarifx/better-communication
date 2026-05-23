@@ -1,4 +1,4 @@
-import { hashPassword } from "../../lib/password";
+import { hashPassword, verifyPassword } from "../../lib/password";
 import {
   signAccessToken,
   signRefreshToken,
@@ -7,7 +7,7 @@ import {
 import { COOKIE_NAME, COOKIE_OPTIONS } from "../../lib/cookies";
 import { REFRESH_TOKEN_EXPIRES_IN } from "../../lib/env";
 import { findUserByEmail, createUser, createRefreshToken } from "./repository";
-import type { RegisterInput } from "./schema";
+import type { RegisterInput, LoginInput } from "./schema";
 
 export async function registerUser(input: RegisterInput) {
   const existing = await findUserByEmail(input.email);
@@ -21,6 +21,31 @@ export async function registerUser(input: RegisterInput) {
     passwordHash,
     displayName: input.displayName,
   });
+
+  const accessToken = signAccessToken({ userId: user.id, email: user.email });
+  const refreshToken = signRefreshToken({ userId: user.id });
+  const tokenHash = hashRefreshToken(refreshToken);
+
+  const expiresInMs = parseDuration(REFRESH_TOKEN_EXPIRES_IN);
+  const expiresAt = new Date(Date.now() + expiresInMs);
+
+  await createRefreshToken({ userId: user.id, tokenHash, expiresAt });
+
+  return {
+    data: {
+      user: { id: user.id, email: user.email, displayName: user.displayName },
+      accessToken,
+    },
+    cookie: { name: COOKIE_NAME, value: refreshToken, options: COOKIE_OPTIONS },
+  };
+}
+
+export async function loginUser(input: LoginInput) {
+  const user = await findUserByEmail(input.email);
+
+  if (!user || !verifyPassword(input.password, user.passwordHash)) {
+    return { error: "Invalid email or password" as const, status: 401 };
+  }
 
   const accessToken = signAccessToken({ userId: user.id, email: user.email });
   const refreshToken = signRefreshToken({ userId: user.id });
