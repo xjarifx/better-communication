@@ -17,7 +17,7 @@ export interface RefreshTokenPayload {
   userId: string;
 }
 
-export function createAccessToken(payload: AccessTokenPayload): string {
+export function signAccessToken(payload: AccessTokenPayload): string {
   return jwt.sign(payload, ACCESS_TOKEN_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN as SignOptions["expiresIn"],
   });
@@ -31,7 +31,7 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
   }
 }
 
-export function createRefreshToken(payload: RefreshTokenPayload): string {
+export function signRefreshToken(payload: RefreshTokenPayload): string {
   return jwt.sign(payload, REFRESH_TOKEN_SECRET, {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN as SignOptions["expiresIn"],
   });

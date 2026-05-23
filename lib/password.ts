@@ -8,7 +8,7 @@ export function hashPassword(password: string): string {
 
 export function verifyPassword(
   password: string,
-  storedHashPassword: string,
+  passwordHash: string,
 ): boolean {
-  return bcrypt.compareSync(password, storedHashPassword);
+  return bcrypt.compareSync(password, passwordHash);
 }
