@@ -57,8 +57,8 @@ export function MessageItem({
       <ContextMenuTrigger>
         <div
           className={cn(
-            "mb-2 flex gap-2",
-            isOwn ? "flex-row-reverse" : "flex-row",
+            "mb-2 flex w-full gap-2",
+            isOwn ? "flex-row-reverse justify-end" : "flex-row justify-start",
           )}
         >
           {showSender && !isOwn && (

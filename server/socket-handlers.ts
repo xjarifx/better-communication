@@ -19,6 +19,22 @@ export function registerHandlers(io: Server) {
   io.on("connection", (socket: Socket) => {
     const userId = getUserId(socket);
 
+    // Join user to their personal room for receiving notifications
+    socket.join(`user:${userId}`);
+
+    socket.on(
+      "conversation:created",
+      async (payload: { conversationId: string; otherUserIds: string[] }) => {
+        // Notify other users in the conversation that it was created
+        for (const otherUserId of payload.otherUserIds) {
+          io.to(`user:${otherUserId}`).emit("conversation:new", {
+            conversationId: payload.conversationId,
+            createdBy: userId,
+          });
+        }
+      },
+    );
+
     socket.on(
       "join:conversations",
       async (payload: { conversationIds: string[] }) => {

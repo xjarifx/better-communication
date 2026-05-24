@@ -16,7 +16,7 @@ export async function findConversationsByUserId(userId: string) {
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { content: true, senderId: true, createdAt: true },
+        select: { id: true, content: true, senderId: true, createdAt: true },
       },
     },
     orderBy: { updatedAt: "desc" },

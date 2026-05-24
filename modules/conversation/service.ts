@@ -18,9 +18,9 @@ function formatConversation(
     type: conv.type,
     name: conv.name,
     members: conv.members.map((m) => ({
-      id: m.user.id,
-      displayName: m.user.displayName,
-      avatarUrl: m.user.avatarUrl,
+      id: m.user?.id ?? "",
+      displayName: m.user?.displayName ?? "Unknown User",
+      avatarUrl: m.user?.avatarUrl ?? null,
     })),
     createdAt: conv.createdAt.toISOString(),
     updatedAt: conv.updatedAt.toISOString(),
@@ -48,6 +48,7 @@ export async function listConversations(userId: string) {
       })),
       lastMessage: conv.messages[0]
         ? {
+            id: conv.messages[0].id,
             content: conv.messages[0].content,
             senderId: conv.messages[0].senderId,
             createdAt: conv.messages[0].createdAt.toISOString(),

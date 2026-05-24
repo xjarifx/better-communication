@@ -23,6 +23,7 @@ export function useConversation(id: string | null) {
 export function useCreateConversation() {
   const queryClient = useQueryClient()
   const socketStore = useSocketStore.getState()
+  const authStore = useAuthStore.getState()
 
   return useMutation({
     mutationFn: (input: CreateConversationInput) =>
@@ -38,6 +39,16 @@ export function useCreateConversation() {
         socket.emit("conversation:join", {
           conversationId: data.conversation.id,
         })
+        // Notify other members about the new conversation
+        const otherUserIds = data.conversation.members
+          .filter((m) => m.id !== authStore.user?.id)
+          .map((m) => m.id)
+        if (otherUserIds.length > 0) {
+          socket.emit("conversation:created", {
+            conversationId: data.conversation.id,
+            otherUserIds,
+          })
+        }
       }
     },
   })

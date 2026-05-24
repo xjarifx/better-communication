@@ -56,6 +56,11 @@ function SocketHandler() {
       useSocketStore.getState().setConnected(false)
     })
 
+    socket.on("conversation:new", (data: { conversationId: string; createdBy: string }) => {
+      // When a new conversation is created by another user, invalidate conversations cache
+      queryClient.invalidateQueries({ queryKey: ["conversations"] })
+    })
+
     socket.on("message:new", (message: Message) => {
       queryClient.setQueryData(["messages", message.conversationId], (old: any) => {
         if (!old?.pages) return old
