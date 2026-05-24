@@ -10,17 +10,18 @@ export function Header() {
   const router = useRouter()
 
   return (
-    <header className="flex h-14 items-center gap-2 border-b px-4 md:hidden">
+    <header className="flex h-14 items-center gap-2 border-b bg-card/95 px-3 shadow-sm md:hidden">
       {selectedConversationId ? (
         <Button
           variant="ghost"
           size="icon"
+          className="rounded-full"
           onClick={() => router.push("/messages")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
       ) : (
-        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleSidebar}>
           <Menu className="h-5 w-5" />
         </Button>
       )}

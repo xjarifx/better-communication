@@ -12,7 +12,7 @@ export function AuthCard({
   return (
     <div
       className={cn(
-        "flex min-h-screen items-center justify-center bg-muted/50 px-4",
+        "chat-wallpaper flex min-h-screen items-center justify-center px-4 py-8",
         className,
       )}
     >

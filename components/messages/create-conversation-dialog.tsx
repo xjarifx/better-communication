@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -14,26 +14,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useUiStore } from "@/stores/ui-store"
 import { useCreateConversation } from "@/hooks/use-conversations"
-import { useAuthStore } from "@/stores/auth-store"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export function CreateConversationDialog() {
   const { modals, closeModal } = useUiStore()
   const isOpen = modals.createConversation
-  const { user } = useAuthStore()
 
   const [conversationType, setConversationType] = useState<"DIRECT" | "GROUP">("DIRECT")
   const [groupName, setGroupName] = useState("")
   const [memberEmails, setMemberEmails] = useState("")
   const { mutate: createConversation, isPending } = useCreateConversation()
 
-  useEffect(() => {
-    if (!isOpen) {
-      setConversationType("DIRECT")
-      setGroupName("")
-      setMemberEmails("")
-    }
-  }, [isOpen])
+  const resetForm = () => {
+    setConversationType("DIRECT")
+    setGroupName("")
+    setMemberEmails("")
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +48,10 @@ export function CreateConversationDialog() {
         memberIds: emails,
       },
       {
-        onSuccess: () => closeModal("createConversation"),
+        onSuccess: () => {
+          resetForm()
+          closeModal("createConversation")
+        },
       },
     )
   }
@@ -61,10 +60,13 @@ export function CreateConversationDialog() {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) closeModal("createConversation")
+        if (!open) {
+          resetForm()
+          closeModal("createConversation")
+        }
       }}
     >
-      <DialogContent>
+      <DialogContent className="border-0 bg-card/95 shadow-xl backdrop-blur">
         <DialogHeader>
           <DialogTitle>New Conversation</DialogTitle>
           <DialogDescription>
@@ -79,7 +81,7 @@ export function CreateConversationDialog() {
               setConversationType(v as "DIRECT" | "GROUP")
             }
           >
-            <TabsList className="w-full">
+            <TabsList className="w-full rounded-xl bg-muted">
               <TabsTrigger value="DIRECT" className="flex-1">
                 Direct Message
               </TabsTrigger>
@@ -95,6 +97,7 @@ export function CreateConversationDialog() {
                   <Input
                     id="groupName"
                     placeholder="My Group"
+                    className="rounded-xl bg-muted/70"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     required
@@ -115,6 +118,7 @@ export function CreateConversationDialog() {
                       ? "user@example.com"
                       : "user1@example.com, user2@example.com"
                   }
+                  className="rounded-xl bg-muted/70"
                   value={memberEmails}
                   onChange={(e) => setMemberEmails(e.target.value)}
                   required
@@ -131,7 +135,7 @@ export function CreateConversationDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" className="rounded-xl" disabled={isPending}>
               {isPending ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>

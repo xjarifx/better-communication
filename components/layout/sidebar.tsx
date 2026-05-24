@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn, getConversationDisplayName, getInitials, formatTime } from "@/lib/utils"
-import { MessageSquarePlus, Search, LogOut, Loader2 } from "lucide-react"
+import { MessageSquarePlus, Search, LogOut, Loader2, Settings } from "lucide-react"
 import { useState } from "react"
 import { useLogout } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
@@ -21,32 +21,43 @@ export function Sidebar() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredConversations = conversations?.filter((c) => {
-    if (!searchQuery) return true
-    const name = getConversationDisplayName(c, user?.id ?? "")
-    return name.toLowerCase().includes(searchQuery.toLowerCase())
-  })
+  const filteredConversations = conversations
+    ?.filter((c) => {
+      if (!searchQuery) return true
+      const name = getConversationDisplayName(c, user?.id ?? "")
+      return name.toLowerCase().includes(searchQuery.toLowerCase())
+    })
+    .sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt ?? a.updatedAt
+      const bTime = b.lastMessage?.createdAt ?? b.updatedAt
+      return new Date(bTime).getTime() - new Date(aTime).getTime()
+    })
 
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col border-r bg-background md:w-80",
+        "flex h-full w-full flex-col border-r bg-card shadow-sm md:w-[360px]",
         !sidebarOpen && "hidden md:flex",
       )}
     >
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <h1 className="text-lg font-semibold">Messages</h1>
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between px-4 pb-2 pt-4">
+        <div>
+          <h1 className="text-xl font-semibold">Chats</h1>
+          <p className="text-xs text-muted-foreground">Better Communication</p>
+        </div>
+        <div className="flex items-center gap-1.5">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => openModal("createConversation")}
+            className="h-9 w-9 rounded-full text-primary hover:bg-accent"
+            onClick={() => router.push("/profile")}
           >
-            <MessageSquarePlus className="h-5 w-5" />
+            <Settings className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
+            className="h-9 w-9 rounded-full text-muted-foreground hover:bg-accent hover:text-destructive"
             onClick={() => {
               logout()
               router.push("/login")
@@ -57,28 +68,26 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="border-b px-4 py-2">
+      <div className="px-4 pb-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search conversations..."
-            className="pl-8"
+            placeholder="Search"
+            className="h-10 rounded-full border-0 bg-muted pl-10 shadow-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 px-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : filteredConversations?.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            {searchQuery
-              ? "No conversations found"
-              : "No conversations yet. Start one!"}
+          <div className="mx-2 rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
+            {searchQuery ? "No conversations found" : "No conversations yet"}
           </div>
         ) : (
           filteredConversations?.map((conversation) => {
@@ -90,20 +99,22 @@ export function Sidebar() {
                 key={conversation.id}
                 onClick={() => selectConversation(conversation.id)}
                 className={cn(
-                  "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent",
-                  isActive && "bg-accent",
+                  "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-accent/70",
+                  isActive && "bg-accent text-accent-foreground",
                 )}
               >
-                <Avatar className="h-12 w-12 shrink-0">
+                <Avatar className="h-12 w-12 shrink-0 ring-2 ring-background">
                   <AvatarImage
                     src={conversation.members.find((m) => m.id !== user?.id)?.avatarUrl ?? undefined}
                     alt={displayName}
                   />
-                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getInitials(displayName)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <p className="truncate text-sm font-medium">{displayName}</p>
+                    <p className="truncate text-sm font-semibold">{displayName}</p>
                     {conversation.lastMessage && (
                       <span className="ml-2 shrink-0 text-xs text-muted-foreground">
                         {formatTime(conversation.lastMessage.createdAt)}
@@ -122,10 +133,10 @@ export function Sidebar() {
         )}
       </ScrollArea>
 
-      <div className="flex items-center gap-3 border-t px-4 py-3">
-        <Avatar className="h-8 w-8">
+      <div className="m-3 flex items-center gap-3 rounded-2xl bg-muted/70 px-3 py-3">
+        <Avatar className="h-9 w-9">
           <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.displayName ?? ""} />
-          <AvatarFallback className="text-xs">
+          <AvatarFallback className="bg-primary text-xs text-primary-foreground">
             {getInitials(user?.displayName ?? "")}
           </AvatarFallback>
         </Avatar>
@@ -133,6 +144,14 @@ export function Sidebar() {
           <p className="truncate text-sm font-medium">{user?.displayName}</p>
           <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
         </div>
+        <Button
+          variant="default"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-full shadow-sm"
+          onClick={() => openModal("createConversation")}
+        >
+          <MessageSquarePlus className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   )

@@ -25,12 +25,12 @@ export function UserProfileCard() {
   if (!user) return null
 
   return (
-    <Card>
+    <Card className="border-0 shadow-sm">
       <CardHeader>
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
+          <Avatar className="h-16 w-16 ring-4 ring-accent">
             <AvatarImage src={user.avatarUrl ?? undefined} alt={user.displayName} />
-            <AvatarFallback className="text-lg">
+            <AvatarFallback className="bg-primary text-lg text-primary-foreground">
               {getInitials(user.displayName)}
             </AvatarFallback>
           </Avatar>
@@ -64,7 +64,7 @@ export function ProfileSettings() {
   }
 
   return (
-    <Card>
+    <Card className="border-0 shadow-sm">
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
         <CardDescription>Update your personal information</CardDescription>
@@ -73,7 +73,7 @@ export function ProfileSettings() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name</Label>
-            <Input id="displayName" {...register("displayName")} />
+            <Input id="displayName" className="rounded-xl bg-muted/70" {...register("displayName")} />
             {errors.displayName && (
               <p className="text-sm text-destructive">
                 {errors.displayName.message}
@@ -82,12 +82,12 @@ export function ProfileSettings() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} />
+            <Input id="email" type="email" className="rounded-xl bg-muted/70" {...register("email")} />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" className="rounded-xl">Save Changes</Button>
         </form>
       </CardContent>
     </Card>

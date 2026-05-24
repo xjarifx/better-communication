@@ -10,7 +10,6 @@ import { TypingIndicator } from "@/components/messages/typing-indicator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { shouldShowDateSeparator, formatDateSeparator } from "@/lib/utils"
-import type { Message } from "@/types/message"
 
 export function MessageList({ conversationId }: { conversationId: string }) {
   const { user } = useAuthStore()
@@ -23,7 +22,6 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   } = useMessages(conversationId)
   const { optimisticMessages } = useMessagesStore()
   const { getConversationQueue } = useMessageQueueStore()
-  const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const prevMessageCountRef = useRef(0)
 
@@ -35,11 +33,16 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   const mergedMessages = [...optimistic, ...queued, ...allMessages]
   // Deduplicate by id
   const seen = new Set<string>()
-  const dedupedMessages = mergedMessages.filter((m) => {
-    if (seen.has(m.id)) return false
-    seen.add(m.id)
-    return true
-  })
+  const dedupedMessages = mergedMessages
+    .filter((m) => {
+      if (seen.has(m.id)) return false
+      seen.add(m.id)
+      return true
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -81,17 +84,17 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-2 py-1" onScrollCapture={handleScroll}>
+    <ScrollArea className="chat-wallpaper flex-1 px-2 py-3" onScrollCapture={handleScroll}>
       {isFetchingNextPage && (
-        <div className="flex justify-center py-1">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
       )}
 
       {dedupedMessages.length === 0 && !isFetchingNextPage && (
         <div className="flex h-full items-center justify-center">
-          <p className="text-sm text-muted-foreground">
-            No messages yet. Start the conversation!
+          <p className="rounded-full bg-card/85 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
+            No messages yet
           </p>
         </div>
       )}
@@ -110,12 +113,10 @@ export function MessageList({ conversationId }: { conversationId: string }) {
         return (
           <div key={message.id}>
             {showDateSeparator && (
-              <div className="flex items-center gap-2 py-2">
-                <div className="flex-1 border-t" />
-                <span className="shrink-0 text-xs text-muted-foreground">
+              <div className="flex items-center justify-center py-3">
+                <span className="shrink-0 rounded-full bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
                   {formatDateSeparator(message.createdAt)}
                 </span>
-                <div className="flex-1 border-t" />
               </div>
             )}
             <MessageItem

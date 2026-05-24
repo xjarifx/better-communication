@@ -15,7 +15,7 @@ export const useMessagesStore = create<MessagesState>()((set) => ({
     set((state) => {
       const updated = new Map(state.optimisticMessages)
       const current = updated.get(conversationId) ?? []
-      updated.set(conversationId, [message, ...current])
+      updated.set(conversationId, [...current, message])
       return { optimisticMessages: updated }
     }),
 

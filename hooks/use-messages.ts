@@ -250,12 +250,18 @@ export function useSendMessage(conversationId: string) {
             ...old,
             pages: old.pages.map((page, idx) =>
               idx === 0
-                ? { ...page, messages: [data, ...page.messages] }
+                ? {
+                    ...page,
+                    messages: page.messages.some((m) => m.id === data.id)
+                      ? page.messages
+                      : [...page.messages, data],
+                  }
                 : page,
             ),
           }
         },
       )
+      queryClient.invalidateQueries({ queryKey: ["conversations"] })
     },
 
     onError: (_error, _variables, context) => {

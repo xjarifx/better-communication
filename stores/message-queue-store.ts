@@ -51,11 +51,11 @@ export const useMessageQueueStore = create<MessageQueueStore>()((set, get) => ({
         return state
       }
 
-      const updated = [message, ...state.queue]
+      const updated = [...state.queue, message]
       
       // Trim to max queue size (keep newest)
       if (updated.length > MAX_QUEUE_SIZE) {
-        updated.splice(MAX_QUEUE_SIZE)
+        updated.splice(0, updated.length - MAX_QUEUE_SIZE)
       }
 
       // Persist to localStorage

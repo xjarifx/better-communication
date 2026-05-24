@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ApiError } from "@/lib/api-client"
+import { MessageCircle } from "lucide-react"
 
 export function RegisterForm() {
   const router = useRouter()
@@ -38,10 +39,13 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
+    <Card className="w-full max-w-md border-0 bg-card/95 shadow-xl backdrop-blur">
+      <CardHeader className="items-center text-center">
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+          <MessageCircle className="h-6 w-6" />
+        </div>
         <CardTitle>Create an account</CardTitle>
-        <CardDescription>Enter your details to get started</CardDescription>
+        <CardDescription>Start messaging with a clean, fast workspace</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
@@ -50,6 +54,7 @@ export function RegisterForm() {
             <Input
               id="displayName"
               placeholder="John Doe"
+              className="rounded-xl bg-muted/70"
               {...registerField("displayName")}
             />
             {errors.displayName && (
@@ -62,6 +67,7 @@ export function RegisterForm() {
               id="email"
               type="email"
               placeholder="you@example.com"
+              className="rounded-xl bg-muted/70"
               {...registerField("email")}
             />
             {errors.email && (
@@ -74,6 +80,7 @@ export function RegisterForm() {
               id="password"
               type="password"
               placeholder="At least 8 characters"
+              className="rounded-xl bg-muted/70"
               {...registerField("password")}
             />
             {errors.password && (
@@ -85,7 +92,7 @@ export function RegisterForm() {
           )}
         </CardContent>
         <CardFooter className="flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isPending}>
+          <Button type="submit" className="h-11 w-full rounded-xl" disabled={isPending}>
             {isPending ? "Creating account..." : "Create Account"}
           </Button>
           <p className="text-sm text-muted-foreground">

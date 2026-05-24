@@ -28,37 +28,30 @@ export function TypingIndicator({
   const firstTyper = typingUserObjects[0]
   const names = typingUserObjects.map((u) => u?.displayName ?? "Someone")
 
-  const label =
-    names.length === 1
-      ? `${names[0]} is typing...`
-      : names.length === 2
-        ? `${names[0]} and ${names[1]} are typing...`
-        : `${names[0]} and ${names.length - 1} others are typing...`
-
   return (
-    <div className="group mb-1 flex w-full gap-1.5 px-2 py-0.5">
+    <div className="group mb-1.5 flex w-full gap-2 px-1 py-0.5">
       {firstTyper && (
-        <Avatar className="mt-0.5 h-7 w-7 shrink-0">
+        <Avatar className="mt-4 h-8 w-8 shrink-0 ring-2 ring-background">
           <AvatarImage
             src={firstTyper.avatarUrl ?? undefined}
             alt={firstTyper.displayName}
           />
-          <AvatarFallback className="text-xs">
+          <AvatarFallback className="bg-primary text-xs text-primary-foreground">
             {getInitials(firstTyper.displayName)}
           </AvatarFallback>
         </Avatar>
       )}
 
       <div className="flex flex-col">
-        <p className="mb-0.5 px-2 text-xs font-medium text-muted-foreground">
+        <p className="mb-1 px-3 text-xs font-semibold text-primary">
           {names.length === 1 ? names[0] : `${names[0]} and ${names.length - 1} ${names.length === 2 ? "other" : "others"}`}
         </p>
 
-        <div className="animate-in fade-in slide-in-from-bottom-1 duration-300 rounded-2xl rounded-bl-none bg-muted px-3 py-1.5 shadow-sm">
+        <div className="animate-in fade-in slide-in-from-bottom-1 rounded-[1.15rem] rounded-bl-md bg-card px-3.5 py-2 shadow-sm duration-300">
           <div className="flex items-center gap-1">
-            <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:0.1s]" />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:0.2s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70 [animation-delay:0.1s]" />
+            <span className="h-2 w-2 animate-bounce rounded-full bg-primary/70 [animation-delay:0.2s]" />
           </div>
         </div>
       </div>

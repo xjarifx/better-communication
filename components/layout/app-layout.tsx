@@ -1,6 +1,5 @@
 "use client"
 
-import { useUiStore } from "@/stores/ui-store"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { CreateConversationDialog } from "@/components/messages/create-conversation-dialog"
@@ -11,11 +10,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { incomingCall } = useCallStore()
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-hidden">{children}</main>
+        <main className="min-w-0 flex-1 overflow-hidden">{children}</main>
       </div>
       <CreateConversationDialog />
       {incomingCall && <IncomingCallModal />}

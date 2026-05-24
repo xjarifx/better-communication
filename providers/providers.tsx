@@ -112,7 +112,12 @@ function SocketHandler() {
           ...old,
           pages: old.pages.map((page: any, idx: number) =>
             idx === 0
-              ? { ...page, messages: [message, ...page.messages] }
+              ? {
+                  ...page,
+                  messages: page.messages.some((m: Message) => m.id === message.id)
+                    ? page.messages
+                    : [...page.messages, message],
+                }
               : page,
           ),
         }

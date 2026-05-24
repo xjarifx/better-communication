@@ -18,7 +18,7 @@ import { useSocketStore } from "@/stores/socket-store"
 import { useMessageQueueStore } from "@/stores/message-queue-store"
 import { MessageStatusBadge } from "./message-status-badge"
 import { retryMessage } from "@/lib/message-queue"
-import { Edit3, Trash2, Check, X, RotateCw } from "lucide-react"
+import { Edit3, Trash2, Check, X, RotateCw, CheckCheck } from "lucide-react"
 
 export function MessageItem({
   message,
@@ -73,37 +73,37 @@ export function MessageItem({
       <ContextMenuTrigger>
         <div
           className={cn(
-            "group mb-1 flex w-full gap-1.5 px-2 py-0.5 transition-colors hover:bg-accent/30",
+            "group mb-1.5 flex w-full gap-2 px-1 py-0.5",
             isOwn ? "flex-row-reverse justify-end" : "flex-row justify-start",
           )}
         >
           {showSender && !isOwn && (
-            <Avatar className="mt-0.5 h-7 w-7 shrink-0">
+            <Avatar className="mt-4 h-8 w-8 shrink-0 ring-2 ring-background">
               <AvatarImage
                 src={message.sender.avatarUrl ?? undefined}
                 alt={message.sender.displayName}
               />
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
                 {getInitials(message.sender.displayName)}
               </AvatarFallback>
             </Avatar>
           )}
 
-          {!showSender && !isOwn && <div className="w-7 shrink-0" />}
+          {!showSender && !isOwn && <div className="w-8 shrink-0" />}
 
-          <div className={cn("flex flex-col", isOwn && "items-end")}>
+          <div className={cn("flex max-w-[82%] flex-col sm:max-w-[70%]", isOwn && "items-end")}>
             {showSender && !isOwn && (
-              <p className="mb-0.5 px-2 text-xs font-medium text-muted-foreground">
+              <p className="mb-1 px-3 text-xs font-semibold text-primary">
                 {message.sender.displayName}
               </p>
             )}
 
             <div
               className={cn(
-                "animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden rounded-2xl px-3 py-1.5",
+                "animate-in fade-in slide-in-from-bottom-2 relative overflow-hidden rounded-[1.15rem] px-3.5 py-2 shadow-sm duration-300",
                 isOwn
-                  ? "rounded-br-none bg-blue-600 text-white shadow-sm"
-                  : "rounded-bl-none bg-muted text-foreground shadow-sm",
+                  ? "rounded-br-md bg-primary text-primary-foreground"
+                  : "rounded-bl-md bg-card text-card-foreground",
                 isOptimistic && "opacity-60",
               )}
             >
@@ -113,7 +113,7 @@ export function MessageItem({
                     <img
                       src={message.thumbnailUrl}
                       alt={message.fileName ?? "Image"}
-                      className="max-w-[200px] rounded-lg object-cover"
+                      className="max-w-[240px] rounded-xl object-cover"
                     />
                   )}
                   {message.fileUrl && message.type === "FILE" && (
@@ -123,7 +123,7 @@ export function MessageItem({
                       rel="noopener noreferrer"
                       className={cn(
                         "flex items-center gap-2 text-sm underline",
-                        isOwn ? "text-white" : "text-blue-600"
+                        isOwn ? "text-primary-foreground" : "text-primary"
                       )}
                     >
                       {message.fileName ?? "File"}
@@ -165,6 +165,22 @@ export function MessageItem({
               ) : (
                 <p className="text-sm leading-relaxed">{message.content}</p>
               )}
+
+              {!isEditing && (
+                <div
+                  className={cn(
+                    "mt-1 flex items-center justify-end gap-1 text-[11px]",
+                    isOwn ? "text-primary-foreground/75" : "text-muted-foreground",
+                  )}
+                >
+                  {isOptimistic ? (
+                    <span>Sending</span>
+                  ) : (
+                    <span>{formatMessageTime(message.createdAt)}</span>
+                  )}
+                  {isOwn && !isOptimistic && <CheckCheck className="h-3.5 w-3.5" />}
+                </div>
+              )}
             </div>
 
             <TooltipProvider delayDuration={200}>
@@ -172,13 +188,10 @@ export function MessageItem({
                 <TooltipTrigger asChild>
                   <div
                     className={cn(
-                      "mt-0.5 flex items-center gap-1 px-2 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100",
+                      "mt-1 flex items-center gap-1 px-2 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100",
                       isOwn && "justify-end",
                     )}
                   >
-                    {isOptimistic && (
-                      <span className="italic">Sending...</span>
-                    )}
                     {messageStatus && isOwn && (
                       <>
                         <MessageStatusBadge 
@@ -198,9 +211,6 @@ export function MessageItem({
                           </Button>
                         )}
                       </>
-                    )}
-                    {!isOptimistic && (
-                      <span>{formatMessageTime(message.createdAt)}</span>
                     )}
                   </div>
                 </TooltipTrigger>
