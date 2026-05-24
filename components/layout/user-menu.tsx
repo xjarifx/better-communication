@@ -12,13 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useRouter } from "next/navigation"
 import { getInitials } from "@/lib/utils"
 
 export function UserMenu() {
   const { user } = useAuthStore()
   const logout = useLogout()
-  const router = useRouter()
 
   if (!user) return null
 
@@ -41,13 +39,6 @@ export function UserMenu() {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/profile")}>
-          Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
-          Settings
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"

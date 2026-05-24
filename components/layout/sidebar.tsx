@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn, getConversationDisplayName, getInitials, formatTime } from "@/lib/utils"
-import { MessageSquarePlus, Search, LogOut, Loader2, Settings } from "lucide-react"
+import { MessageSquarePlus, Search, LogOut, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useLogout } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
@@ -46,14 +46,6 @@ export function Sidebar() {
           <p className="text-xs text-muted-foreground">Better Communication</p>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-primary hover:bg-accent"
-            onClick={() => router.push("/profile")}
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
           <Button
             variant="ghost"
             size="icon"

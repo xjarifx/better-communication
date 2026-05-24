@@ -872,7 +872,6 @@ Caller Client           Next.js          Daily.co API        Socket.IO        Re
 /conversations              → ConversationListPage (sidebar + empty state)
 /conversations/:id          → ConversationPage (sidebar + chat view)
 /conversations/:id/call     → CallPage (overlay with Daily.co)
-/settings                   → SettingsPage (profile editing)
 ```
 
 ### 11.2 Component Tree
@@ -950,9 +949,6 @@ better-communication/
 │   │       ├── page.tsx          # Chat view page
 │   │       └── call/
 │   │           └── page.tsx      # Video call page (overlay)
-│   ├── settings/
-│   │   └── page.tsx              # Settings page
-│   │
 │   └── api/
 │       ├── auth/
 │       │   ├── register/route.ts # Done
