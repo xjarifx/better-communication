@@ -1,21 +1,21 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface UiState {
-  selectedConversationId: string | null
-  sidebarOpen: boolean
-  theme: "light" | "dark"
+  selectedConversationId: string | null;
+  sidebarOpen: boolean;
+  theme: "light" | "dark";
   modals: {
-    createConversation: boolean
-    fileUpload: boolean
-    settings: boolean
-  }
-  selectConversation: (id: string | null) => void
-  toggleSidebar: () => void
-  setSidebarOpen: (open: boolean) => void
-  setTheme: (theme: "light" | "dark") => void
-  openModal: (name: keyof UiState["modals"]) => void
-  closeModal: (name: keyof UiState["modals"]) => void
-  closeAllModals: () => void
+    createConversation: boolean;
+    fileUpload: boolean;
+    settings: boolean;
+  };
+  selectConversation: (id: string | null) => void;
+  toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
+  setTheme: (theme: "light" | "dark") => void;
+  openModal: (name: keyof UiState["modals"]) => void;
+  closeModal: (name: keyof UiState["modals"]) => void;
+  closeAllModals: () => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -28,7 +28,11 @@ export const useUiStore = create<UiState>()((set) => ({
     settings: false,
   },
 
-  selectConversation: (id) => set({ selectedConversationId: id, sidebarOpen: false }),
+  selectConversation: (id) =>
+    set({
+      selectedConversationId: id,
+      ...(id === null ? { sidebarOpen: true } : {}),
+    }),
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
@@ -54,4 +58,4 @@ export const useUiStore = create<UiState>()((set) => ({
         settings: false,
       },
     }),
-}))
+}));

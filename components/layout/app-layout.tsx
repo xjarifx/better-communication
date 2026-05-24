@@ -12,7 +12,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const showSidebarOnMobile = sidebarOpen || !selectedConversationId;
 
   return (
-    <div className="bg-background text-foreground flex h-dvh w-full overflow-hidden">
+    <div className="bg-background text-foreground flex h-dvh w-screen overflow-hidden">
       <div
         className={
           showSidebarOnMobile

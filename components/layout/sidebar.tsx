@@ -13,14 +13,26 @@ import {
   getInitials,
   formatTime,
 } from "@/lib/utils";
-import { MessageSquarePlus, Search, LogOut, Loader2 } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Search,
+  LogOut,
+  Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 
 export function Sidebar() {
-  const { selectedConversationId, selectConversation, sidebarOpen, openModal } =
-    useUiStore();
+  const {
+    selectedConversationId,
+    selectConversation,
+    sidebarOpen,
+    setSidebarOpen,
+    openModal,
+  } = useUiStore();
   const { user } = useAuthStore();
   const { data: conversations, isLoading } = useConversations();
   const logout = useLogout();
@@ -39,11 +51,45 @@ export function Sidebar() {
       return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
 
+  const handleSelectConversation = (conversationId: string) => {
+    selectConversation(conversationId);
+
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setSidebarOpen(false);
+    }
+  };
+
+  if (!sidebarOpen) {
+    return (
+      <aside className="bg-card hidden h-full min-h-0 w-14 shrink-0 flex-col items-center border-r py-3 shadow-sm md:flex">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-10 w-10 rounded-full"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          <PanelLeftOpen className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="default"
+          size="icon"
+          className="mt-auto h-10 w-10 rounded-full shadow-sm"
+          onClick={() => openModal("createConversation")}
+          aria-label="New conversation"
+          title="New conversation"
+        >
+          <MessageSquarePlus className="h-5 w-5" />
+        </Button>
+      </aside>
+    );
+  }
+
   return (
     <div
       className={cn(
         "bg-card flex h-full min-h-0 w-full flex-col border-r shadow-sm md:w-[360px] md:shrink-0",
-        !sidebarOpen && "hidden md:flex",
       )}
     >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -52,6 +98,16 @@ export function Sidebar() {
           <p className="text-muted-foreground text-xs">Better Communication</p>
         </div>
         <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground hidden h-9 w-9 rounded-full md:inline-flex"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+          >
+            <PanelLeftClose className="h-5 w-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -98,7 +154,7 @@ export function Sidebar() {
             return (
               <button
                 key={conversation.id}
-                onClick={() => selectConversation(conversation.id)}
+                onClick={() => handleSelectConversation(conversation.id)}
                 className={cn(
                   "hover:bg-accent/70 flex w-full min-w-0 items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors",
                   isActive && "bg-accent text-accent-foreground",
