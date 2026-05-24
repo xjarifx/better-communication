@@ -1,9 +1,7 @@
-import { DAILY_API_KEY } from "./env";
-
 const DAILY_API_URL = "https://api.daily.co/v1";
 
 const headers = {
-  Authorization: `Bearer ${DAILY_API_KEY}`,
+  Authorization: `Bearer ${process.env.DAILY_API_KEY!}`,
   "Content-Type": "application/json",
 };
 

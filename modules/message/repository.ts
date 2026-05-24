@@ -27,7 +27,9 @@ export async function findMessagesByConversationId(
 
   return {
     messages: items.reverse(),
-    nextCursor: hasMore ? items[items.length - 1]!.createdAt.toISOString() : null,
+    nextCursor: hasMore
+      ? items[items.length - 1]!.createdAt.toISOString()
+      : null,
   };
 }
 

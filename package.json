@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n next,socket \"next dev\" \"tsx watch server/socket.ts\"",
+    "dev:next": "next dev",
+    "dev:socket": "tsx watch server/socket.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -19,10 +21,12 @@
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
+    "concurrently": "^9.2.1",
     "jsonwebtoken": "^9.0.3",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "socket.io": "^4.8.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -39,6 +43,7 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }

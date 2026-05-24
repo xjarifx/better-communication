@@ -6,7 +6,11 @@ import {
   updateMessage,
   deleteMessage,
 } from "./repository";
-import type { SendMessageInput, EditMessageInput, MessagesQueryInput } from "./schema";
+import type {
+  SendMessageInput,
+  EditMessageInput,
+  MessagesQueryInput,
+} from "./schema";
 
 function formatMessage(msg: Awaited<ReturnType<typeof createMessage>>) {
   return {

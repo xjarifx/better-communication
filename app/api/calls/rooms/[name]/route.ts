@@ -16,10 +16,7 @@ export async function GET(
   const result = await getDailyRoom(name);
 
   if ("error" in result) {
-    return Response.json(
-      { error: result.error },
-      { status: result.status },
-    );
+    return Response.json({ error: result.error }, { status: result.status });
   }
 
   return Response.json(result);
