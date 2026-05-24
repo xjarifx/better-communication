@@ -4,7 +4,6 @@ import {
   findConversationById,
   deleteConversation,
   findDirectConversationBetweenUsers,
-  findMembership,
   countUnreadMessagesBatch,
 } from "./repository";
 import type { CreateConversationInput } from "./schema";
@@ -92,23 +91,28 @@ export async function createConversationForUser(
 }
 
 export async function getConversation(id: string, userId: string) {
-  const membership = await findMembership(id, userId);
-  if (!membership) {
-    return { error: "Conversation not found" as const, status: 404 };
-  }
-
   const conversation = await findConversationById(id);
   if (!conversation) {
     return { error: "Conversation not found" as const, status: 404 };
+  }
+
+  const membership = conversation.members.find((m) => m.userId === userId);
+  if (!membership) {
+    return { error: "Forbidden" as const, status: 403 };
   }
 
   return { conversation: formatConversation(conversation)! };
 }
 
 export async function removeConversation(id: string, userId: string) {
-  const membership = await findMembership(id, userId);
-  if (!membership) {
+  const conversation = await findConversationById(id);
+  if (!conversation) {
     return { error: "Conversation not found" as const, status: 404 };
+  }
+
+  const membership = conversation.members.find((m) => m.userId === userId);
+  if (!membership) {
+    return { error: "Forbidden" as const, status: 403 };
   }
 
   await deleteConversation(id);
