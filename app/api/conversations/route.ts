@@ -37,5 +37,9 @@ export async function POST(request: NextRequest) {
     auth.payload.userId,
   );
 
+  if ("error" in result) {
+    return Response.json({ error: result.error }, { status: result.status });
+  }
+
   return Response.json(result, { status: 201 });
 }

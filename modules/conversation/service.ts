@@ -1,3 +1,4 @@
+import { prisma } from "../../lib/prisma";
 import {
   createConversation,
   findConversationsByUserId,
@@ -62,10 +63,22 @@ export async function createConversationForUser(
   input: CreateConversationInput,
   userId: string,
 ) {
-  const allMemberIds = [...new Set([...input.memberIds, userId])];
+  const users = await prisma.user.findMany({
+    where: { email: { in: input.memberIds } },
+    select: { id: true, email: true },
+  });
+
+  if (users.length !== input.memberIds.length) {
+    const found = new Set(users.map((u) => u.email));
+    const missing = input.memberIds.filter((e) => !found.has(e));
+    return { error: `Users not found: ${missing.join(", ")}` as const, status: 404 };
+  }
+
+  const resolvedMemberIds = users.map((u) => u.id);
+  const allMemberIds = [...new Set([...resolvedMemberIds, userId])];
 
   if (input.type === "DIRECT") {
-    const otherUserId = input.memberIds[0];
+    const otherUserId = resolvedMemberIds[0];
     const existing = await findDirectConversationBetweenUsers(
       userId,
       otherUserId,
