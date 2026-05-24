@@ -43,8 +43,24 @@ export async function createMessage(data: {
   fileName?: string | null;
   fileSize?: number | null;
 }) {
-  return prisma.message.create({
-    data,
+  const [message] = await prisma.$transaction([
+    prisma.message.create({
+      data,
+      include: messageInclude,
+    }),
+    prisma.conversation.update({
+      where: { id: data.conversationId },
+      data: { updatedAt: new Date() },
+    }),
+  ]);
+
+  return message;
+}
+
+export async function findLatestMessageByConversationId(conversationId: string) {
+  return prisma.message.findFirst({
+    where: { conversationId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: messageInclude,
   });
 }

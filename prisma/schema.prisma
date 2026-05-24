@@ -52,7 +52,6 @@ model ConversationMember {
   conversationId String       @db.Uuid
   userId         String       @db.Uuid
   joinedAt       DateTime     @default(now())
-  lastReadAt     DateTime     @default(now())
 
   // Relations
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

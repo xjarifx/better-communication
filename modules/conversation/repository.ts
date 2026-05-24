@@ -16,7 +16,7 @@ export async function findConversationsByUserId(userId: string) {
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { content: true, senderId: true, createdAt: true },
+        select: { id: true, content: true, senderId: true, createdAt: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -99,35 +99,4 @@ export async function findMembership(conversationId: string, userId: string) {
   });
 }
 
-export async function countUnreadMessages(
-  conversationId: string,
-  lastReadAt: Date,
-) {
-  return prisma.message.count({
-    where: {
-      conversationId,
-      createdAt: { gt: lastReadAt },
-    },
-  });
-}
 
-export async function countUnreadMessagesBatch(
-  userId: string,
-  conversationIds: string[],
-): Promise<Map<string, number>> {
-  if (conversationIds.length === 0) return new Map();
-
-  type Row = { conversationId: string; count: bigint };
-  const rows = await prisma.$queryRaw<Row[]>`
-    SELECT cm."conversationId", COUNT(m.id)::int AS count
-    FROM "conversation_members" cm
-    LEFT JOIN "messages" m
-      ON m."conversationId" = cm."conversationId"
-      AND m."createdAt" > cm."lastReadAt"
-    WHERE cm."userId" = ${userId}
-      AND cm."conversationId" IN (${Prisma.join(conversationIds)})
-    GROUP BY cm."conversationId"
-  `;
-
-  return new Map(rows.map((r) => [r.conversationId, Number(r.count)]));
-}

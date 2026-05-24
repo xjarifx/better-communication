@@ -1,10 +1,10 @@
+import { prisma } from "../../lib/prisma";
 import {
   createConversation,
   findConversationsByUserId,
   findConversationById,
   deleteConversation,
   findDirectConversationBetweenUsers,
-  countUnreadMessagesBatch,
 } from "./repository";
 import type { CreateConversationInput } from "./schema";
 
@@ -17,9 +17,9 @@ function formatConversation(
     type: conv.type,
     name: conv.name,
     members: conv.members.map((m) => ({
-      id: m.user.id,
-      displayName: m.user.displayName,
-      avatarUrl: m.user.avatarUrl,
+      id: m.user?.id ?? "",
+      displayName: m.user?.displayName ?? "Unknown User",
+      avatarUrl: m.user?.avatarUrl ?? null,
     })),
     createdAt: conv.createdAt.toISOString(),
     updatedAt: conv.updatedAt.toISOString(),
@@ -29,12 +29,8 @@ function formatConversation(
 export async function listConversations(userId: string) {
   const conversations = await findConversationsByUserId(userId);
 
-  const conversationIds = conversations.map((c) => c.id);
-  const unreadCounts = await countUnreadMessagesBatch(userId, conversationIds);
-
   return conversations.map((conv) => {
     const member = conv.members.find((m) => m.userId === userId)!;
-    const unreadCount = unreadCounts.get(conv.id) ?? 0;
 
     return {
       id: conv.id,
@@ -47,12 +43,12 @@ export async function listConversations(userId: string) {
       })),
       lastMessage: conv.messages[0]
         ? {
+            id: conv.messages[0].id,
             content: conv.messages[0].content,
             senderId: conv.messages[0].senderId,
             createdAt: conv.messages[0].createdAt.toISOString(),
           }
         : null,
-      unreadCount,
       updatedAt: conv.updatedAt.toISOString(),
     };
   });
@@ -62,10 +58,22 @@ export async function createConversationForUser(
   input: CreateConversationInput,
   userId: string,
 ) {
-  const allMemberIds = [...new Set([...input.memberIds, userId])];
+  const users = await prisma.user.findMany({
+    where: { email: { in: input.memberIds } },
+    select: { id: true, email: true },
+  });
+
+  if (users.length !== input.memberIds.length) {
+    const found = new Set(users.map((u) => u.email));
+    const missing = input.memberIds.filter((e) => !found.has(e));
+    return { error: `Users not found: ${missing.join(", ")}` as const, status: 404 };
+  }
+
+  const resolvedMemberIds = users.map((u) => u.id);
+  const allMemberIds = [...new Set([...resolvedMemberIds, userId])];
 
   if (input.type === "DIRECT") {
-    const otherUserId = input.memberIds[0];
+    const otherUserId = resolvedMemberIds[0];
     const existing = await findDirectConversationBetweenUsers(
       userId,
       otherUserId,
