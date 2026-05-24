@@ -51,23 +51,23 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 border-t px-4 py-3"
+      className="flex items-center gap-1.5 border-t px-2 py-2"
     >
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="shrink-0 text-muted-foreground"
+        className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-accent"
       >
-        <Paperclip className="h-5 w-5" />
+        <Paperclip className="h-4 w-4" />
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="shrink-0 text-muted-foreground"
+        className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-accent"
       >
-        <Image className="h-5 w-5" />
+        <Image className="h-4 w-4" />
       </Button>
       <Input
         ref={inputRef}
@@ -78,7 +78,7 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
         }}
         onKeyDown={handleKeyDown}
         placeholder="Message..."
-        className="flex-1"
+        className="flex-1 rounded-full border-none bg-muted px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-0"
         disabled={isPending}
         autoFocus
       />
@@ -86,17 +86,17 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
         type="button"
         variant="ghost"
         size="icon"
-        className="shrink-0 text-muted-foreground"
+        className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-accent"
       >
-        <Smile className="h-5 w-5" />
+        <Smile className="h-4 w-4" />
       </Button>
       <Button
         type="submit"
         size="icon"
         disabled={!content.trim() || isPending}
-        className="shrink-0"
+        className="h-9 w-9 shrink-0 rounded-full bg-blue-600 hover:bg-blue-700"
       >
-        <Send className="h-5 w-5" />
+        <Send className="h-4 w-4" />
       </Button>
     </form>
   )

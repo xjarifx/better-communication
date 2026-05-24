@@ -81,9 +81,9 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-4 py-2" onScrollCapture={handleScroll}>
+    <ScrollArea className="flex-1 px-2 py-1" onScrollCapture={handleScroll}>
       {isFetchingNextPage && (
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-1">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       )}
@@ -110,7 +110,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
         return (
           <div key={message.id}>
             {showDateSeparator && (
-              <div className="flex items-center gap-2 py-3">
+              <div className="flex items-center gap-2 py-2">
                 <div className="flex-1 border-t" />
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {formatDateSeparator(message.createdAt)}

@@ -21,6 +21,42 @@ async function getToken(): Promise<string | null> {
   }
 }
 
+export async function refreshToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null
+
+  try {
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = await response.json()
+    const token = data.accessToken
+
+    if (token) {
+      // Update the auth store with the new token
+      const stored = localStorage.getItem("auth-storage")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          parsed.state.accessToken = token
+          localStorage.setItem("auth-storage", JSON.stringify(parsed))
+        } catch {
+          // ignore parse error
+        }
+      }
+    }
+
+    return token ?? null
+  } catch {
+    return null
+  }
+}
+
 async function request<T>(
   url: string,
   options: RequestInit = {},

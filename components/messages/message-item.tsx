@@ -11,6 +11,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn, formatMessageTime, getInitials } from "@/lib/utils"
 import { useEditMessage, useDeleteMessage } from "@/hooks/use-messages"
 import { useSocketStore } from "@/stores/socket-store"
@@ -72,12 +73,12 @@ export function MessageItem({
       <ContextMenuTrigger>
         <div
           className={cn(
-            "mb-2 flex w-full gap-2",
+            "group mb-1 flex w-full gap-1.5 px-2 py-0.5 transition-colors hover:bg-accent/30",
             isOwn ? "flex-row-reverse justify-end" : "flex-row justify-start",
           )}
         >
           {showSender && !isOwn && (
-            <Avatar className="mt-1 h-8 w-8 shrink-0">
+            <Avatar className="mt-0.5 h-7 w-7 shrink-0">
               <AvatarImage
                 src={message.sender.avatarUrl ?? undefined}
                 alt={message.sender.displayName}
@@ -88,21 +89,21 @@ export function MessageItem({
             </Avatar>
           )}
 
-          {!showSender && !isOwn && <div className="w-8 shrink-0" />}
+          {!showSender && !isOwn && <div className="w-7 shrink-0" />}
 
-          <div className={cn("max-w-[75%]", isOwn && "items-end")}>
+          <div className={cn("flex flex-col", isOwn && "items-end")}>
             {showSender && !isOwn && (
-              <p className="mb-1 ml-1 text-xs text-muted-foreground">
+              <p className="mb-0.5 px-2 text-xs font-medium text-muted-foreground">
                 {message.sender.displayName}
               </p>
             )}
 
             <div
               className={cn(
-                "rounded-2xl px-3 py-2",
+                "animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden rounded-2xl px-3 py-1.5",
                 isOwn
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground",
+                  ? "rounded-br-none bg-blue-600 text-white shadow-sm"
+                  : "rounded-bl-none bg-muted text-foreground shadow-sm",
                 isOptimistic && "opacity-60",
               )}
             >
@@ -120,7 +121,10 @@ export function MessageItem({
                       href={message.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm underline"
+                      className={cn(
+                        "flex items-center gap-2 text-sm underline",
+                        isOwn ? "text-white" : "text-blue-600"
+                      )}
                     >
                       {message.fileName ?? "File"}
                     </a>
@@ -159,48 +163,52 @@ export function MessageItem({
                   </Button>
                 </div>
               ) : (
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm leading-relaxed">{message.content}</p>
               )}
             </div>
 
-            <div
-              className={cn(
-                "mt-0.5 flex items-center gap-1 px-1",
-                isOwn && "justify-end",
-              )}
-            >
-              <span className="text-[10px] text-muted-foreground">
-                {formatMessageTime(message.createdAt)}
-              </span>
-              
-              {isOptimistic && (
-                <span className="text-[10px] text-muted-foreground italic">
-                  Sending...
-                </span>
-              )}
-              
-              {messageStatus && isOwn && (
-                <>
-                  <MessageStatusBadge 
-                    status={messageStatus}
-                    failureReason={failureReason}
-                  />
-                  
-                  {messageStatus === "failed" && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-5 gap-1 px-1.5 text-[10px]"
-                      onClick={handleRetry}
-                      title="Retry sending this message"
-                    >
-                      <RotateCw className="h-3 w-3" />
-                      Retry
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      "mt-0.5 flex items-center gap-1 px-2 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100",
+                      isOwn && "justify-end",
+                    )}
+                  >
+                    {isOptimistic && (
+                      <span className="italic">Sending...</span>
+                    )}
+                    {messageStatus && isOwn && (
+                      <>
+                        <MessageStatusBadge 
+                          status={messageStatus}
+                          failureReason={failureReason}
+                        />
+                        {messageStatus === "failed" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-4 gap-1 px-1 text-xs"
+                            onClick={handleRetry}
+                            title="Retry sending this message"
+                          >
+                            <RotateCw className="h-3 w-3" />
+                            Retry
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {!isOptimistic && (
+                      <span>{formatMessageTime(message.createdAt)}</span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side={isOwn ? "left" : "right"} className="text-xs">
+                  {new Date(message.createdAt).toLocaleString()}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </ContextMenuTrigger>

@@ -13,6 +13,10 @@ export function useLogin() {
       apiClient.post<AuthResponse>("/api/auth/login", input),
 
     onSuccess: (data) => {
+      console.log("[useLogin] Login successful, storing token and connecting socket", {
+        userId: data.user.id,
+        tokenLength: data.accessToken.length,
+      })
       authStore.login(data.user, data.accessToken)
       initSocketAndJoin(data.accessToken)
     },
@@ -27,6 +31,10 @@ export function useRegister() {
       apiClient.post<AuthResponse>("/api/auth/register", input),
 
     onSuccess: (data) => {
+      console.log("[useRegister] Registration successful, storing token and connecting socket", {
+        userId: data.user.id,
+        tokenLength: data.accessToken.length,
+      })
       authStore.login(data.user, data.accessToken)
       initSocketAndJoin(data.accessToken)
     },
@@ -38,6 +46,7 @@ export function useLogout() {
   const socketStore = useSocketStore.getState()
 
   return () => {
+    console.log("[useLogout] Logging out...")
     socketStore.socket?.disconnect()
     disconnectSocket()
     authStore.logout()
@@ -46,14 +55,21 @@ export function useLogout() {
 }
 
 function initSocketAndJoin(token: string) {
+  console.log("[initSocketAndJoin] Initializing socket with token")
   const socket = initSocket(token)
   useSocketStore.getState().setSocket(socket)
 
   socket.on("connect", () => {
+    console.log("[initSocketAndJoin] Socket connected!")
     useSocketStore.getState().setConnected(true)
   })
 
   socket.on("disconnect", () => {
+    console.log("[initSocketAndJoin] Socket disconnected")
     useSocketStore.getState().setConnected(false)
+  })
+
+  socket.on("connect_error", (error) => {
+    console.error("[initSocketAndJoin] Socket connection error:", error)
   })
 }

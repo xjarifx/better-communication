@@ -38,41 +38,60 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 
 function SocketHandler() {
-  const { accessToken } = useAuthStore()
+  const { accessToken, hydrated } = useAuthStore()
   const { data: conversations } = useConversations()
 
-  console.log(`[SocketHandler] Rendering. accessToken: ${accessToken ? "present" : "missing"}, conversations: ${conversations?.length ?? 0}`)
+  console.log(`[SocketHandler] Rendering`, {
+    hydrated,
+    accessTokenExists: !!accessToken,
+    accessTokenLength: accessToken?.length ?? 0,
+    conversationCount: conversations?.length ?? 0,
+  })
 
   useEffect(() => {
+    // Wait for hydration before attempting socket connection
+    if (!hydrated) {
+      console.log(`[SocketHandler] ⏳ Waiting for auth store hydration...`)
+      return
+    }
+
     if (!accessToken) {
-      console.log(`[SocketHandler] No access token, skipping socket setup`)
+      console.log(`[SocketHandler] ⚠️ No access token after hydration, skipping socket setup`)
       disconnectSocket()
       useSocketStore.getState().setSocket(null)
       useSocketStore.getState().setConnected(false)
       return
     }
 
-    console.log(`[SocketHandler] Setting up socket with token`)
+    console.log(`[SocketHandler] 🔌 Setting up socket with token`, {
+      tokenLength: accessToken.length,
+      tokenPrefix: accessToken.slice(0, 20) + "...",
+    })
     const socket = initSocket(accessToken)
     useSocketStore.getState().setSocket(socket)
     const queryClient = getQueryClient()
 
     socket.on("connect", () => {
-      console.log(`[SocketHandler] Socket connected, joining conversations`)
+      console.log(`[SocketHandler] ✅ Socket connected, joining conversations`)
       useSocketStore.getState().setConnected(true)
       // Join all conversation rooms when socket connects
       if (conversations && conversations.length > 0) {
-        console.log(`[SocketHandler] Emitting join:conversations for ${conversations.length} conversations`)
+        console.log(`[SocketHandler] 📋 Emitting join:conversations for ${conversations.length} conversations`)
         socket.emit("join:conversations", {
           conversationIds: conversations.map((c) => c.id),
         })
       } else {
-        console.log(`[SocketHandler] No conversations to join`)
+        console.log(`[SocketHandler] ℹ️ No conversations to join`)
       }
     })
 
     socket.on("disconnect", () => {
+      console.log(`[SocketHandler] ❌ Socket disconnected`)
       useSocketStore.getState().setConnected(false)
+    })
+
+    socket.on("connect_error", (error) => {
+      console.error(`[SocketHandler] 🔴 Socket connection error:`, error)
     })
 
     socket.on("conversation:new", (data: { conversationId: string; createdBy: string }) => {
@@ -159,7 +178,7 @@ function SocketHandler() {
       socket.disconnect()
       useSocketStore.getState().setSocket(null)
     }
-  }, [accessToken, conversations])
+  }, [hydrated, accessToken, conversations])
 
   return null
 }
