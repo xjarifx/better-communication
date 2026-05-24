@@ -100,7 +100,6 @@ export function useSendMessage(conversationId: string) {
         const maxRetries = 50 // 5 seconds total (50 * 100ms)
         
         const attemptSend = () => {
-          // Get socket at each attempt
           const { socket: currentSocket, isConnected: currentlyConnected } =
             useSocketStore.getState()
           
@@ -114,48 +113,18 @@ export function useSendMessage(conversationId: string) {
               setTimeout(attemptSend, 100)
               return
             } else {
-              console.warn(`[useSendMessage] Socket not connected after ${maxRetries} retries`)
+              console.warn(`[useSendMessage] Socket not connected after ${maxRetries} retries, falling back to REST API`)
               
-              // If socket fails, add to queue for later retry
-              console.log(
-                `[useSendMessage] Failed to send via socket - adding to queue for retry`
-              )
-              
-              const queuedMessage: QueuedMessage = {
-                id: tempId,
-                conversationId,
-                sender: {
-                  id: user?.id ?? "",
-                  displayName: user?.displayName ?? "",
-                  avatarUrl: user?.avatarUrl ?? null,
-                },
-                type: payload.type ?? "TEXT",
-                content: payload.content ?? null,
-                fileUrl: payload.fileUrl ?? null,
-                thumbnailUrl: payload.thumbnailUrl ?? null,
-                fileName: payload.fileName ?? null,
-                fileSize: payload.fileSize ?? null,
-                createdAt: new Date().toISOString(),
-                status: "pending",
-                retryCount: 0,
-                originalPayload: payload,
-                queuedAt: new Date().toISOString(),
-              }
-
-              enqueueMessage(queuedMessage)
-              
-              resolve({
-                id: tempId,
-                conversationId,
-                sender: queuedMessage.sender,
-                type: payload.type ?? "TEXT",
-                content: payload.content ?? null,
-                fileUrl: payload.fileUrl ?? null,
-                thumbnailUrl: payload.thumbnailUrl ?? null,
-                fileName: payload.fileName ?? null,
-                fileSize: payload.fileSize ?? null,
-                createdAt: new Date().toISOString(),
-              })
+              // Fall back to REST API
+              apiClient.post<Message>(`/api/conversations/${conversationId}/messages`, payload)
+                .then((message) => {
+                  console.log(`[useSendMessage] Message sent via REST API: ${message.id}`)
+                  resolve(message)
+                })
+                .catch((err) => {
+                  console.error(`[useSendMessage] REST API also failed:`, err)
+                  reject(new Error(err instanceof Error ? err.message : "Failed to send message"))
+                })
               return
             }
           }
