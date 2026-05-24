@@ -19,12 +19,15 @@ export function registerHandlers(io: Server) {
   io.on("connection", (socket: Socket) => {
     const userId = getUserId(socket);
 
+    console.log(`[socket] User ${userId} connected, socket ID: ${socket.id}`);
+
     // Join user to their personal room for receiving notifications
     socket.join(`user:${userId}`);
 
     socket.on(
       "conversation:created",
       async (payload: { conversationId: string; otherUserIds: string[] }) => {
+        console.log(`[conversation:created] Conversation ${payload.conversationId} created by ${userId}`);
         // Notify other users in the conversation that it was created
         for (const otherUserId of payload.otherUserIds) {
           io.to(`user:${otherUserId}`).emit("conversation:new", {
@@ -39,11 +42,16 @@ export function registerHandlers(io: Server) {
       "join:conversations",
       async (payload: { conversationIds: string[] }) => {
         const { conversationIds } = payload;
+        
+        console.log(`[join:conversations] User ${userId} joining ${conversationIds.length} conversations`);
 
         for (const conversationId of conversationIds) {
           const membership = await findMembership(conversationId, userId);
           if (membership) {
             await socket.join(`conversation:${conversationId}`);
+            console.log(`[join:conversations] User ${userId} joined room conversation:${conversationId}`);
+          } else {
+            console.log(`[join:conversations] User ${userId} not a member of conversation ${conversationId}`);
           }
         }
 
@@ -89,16 +97,18 @@ export function registerHandlers(io: Server) {
         }) => void,
       ) => {
         try {
+          console.log(`[message:send] User ${userId} sending message to ${payload.conversationId}`);
           const membership = await findMembership(
             payload.conversationId,
             userId,
           );
           if (!membership) {
+            console.log(`[message:send] User ${userId} not a member of ${payload.conversationId}`);
             ack?.({ status: "error", error: "Forbidden" });
             return;
           }
 
-          const message = await createMessage({
+           const message = await createMessage({
             conversationId: payload.conversationId,
             senderId: userId,
             type: payload.type,
@@ -108,6 +118,8 @@ export function registerHandlers(io: Server) {
             fileName: payload.fileName ?? null,
             fileSize: payload.fileSize ?? null,
           });
+
+          console.log(`[message:send] Message ${message.id} created, broadcasting to room conversation:${payload.conversationId}`);
 
           const fullMessage = {
             id: message.id,
@@ -126,9 +138,12 @@ export function registerHandlers(io: Server) {
             createdAt: message.createdAt.toISOString(),
           };
 
-          socket
+          // Broadcast to all users in the conversation (including the sender)
+          io
             .to(`conversation:${payload.conversationId}`)
             .emit("message:new", fullMessage);
+          
+          console.log(`[message:send] Message ${message.id} broadcasted`);
           ack?.({ status: "ok", messageId: message.id });
         } catch (err) {
           ack?.({ status: "error", error: "Internal server error" });
@@ -270,6 +285,7 @@ export function registerHandlers(io: Server) {
     });
 
     socket.on("disconnect", () => {
+      console.log(`[socket] User ${userId} disconnected`);
       for (const room of socket.rooms) {
         if (room.startsWith("conversation:")) {
           io.to(room).emit("user:online", { userId, online: false });

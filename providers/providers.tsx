@@ -9,6 +9,7 @@ import { initSocket, disconnectSocket } from "@/lib/socket-client"
 import { useSocketStore } from "@/stores/socket-store"
 import { useMessagesStore } from "@/stores/messages-store"
 import { useCallStore } from "@/stores/call-store"
+import { useConversations } from "@/hooks/use-conversations"
 import type { Message } from "@/types/message"
 import type { IncomingCall } from "@/types/call"
 
@@ -35,21 +36,36 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 function SocketHandler() {
   const { accessToken } = useAuthStore()
+  const { data: conversations } = useConversations()
+
+  console.log(`[SocketHandler] Rendering. accessToken: ${accessToken ? "present" : "missing"}, conversations: ${conversations?.length ?? 0}`)
 
   useEffect(() => {
     if (!accessToken) {
+      console.log(`[SocketHandler] No access token, skipping socket setup`)
       disconnectSocket()
       useSocketStore.getState().setSocket(null)
       useSocketStore.getState().setConnected(false)
       return
     }
 
+    console.log(`[SocketHandler] Setting up socket with token`)
     const socket = initSocket(accessToken)
     useSocketStore.getState().setSocket(socket)
     const queryClient = getQueryClient()
 
     socket.on("connect", () => {
+      console.log(`[SocketHandler] Socket connected, joining conversations`)
       useSocketStore.getState().setConnected(true)
+      // Join all conversation rooms when socket connects
+      if (conversations && conversations.length > 0) {
+        console.log(`[SocketHandler] Emitting join:conversations for ${conversations.length} conversations`)
+        socket.emit("join:conversations", {
+          conversationIds: conversations.map((c) => c.id),
+        })
+      } else {
+        console.log(`[SocketHandler] No conversations to join`)
+      }
     })
 
     socket.on("disconnect", () => {
@@ -62,6 +78,7 @@ function SocketHandler() {
     })
 
     socket.on("message:new", (message: Message) => {
+      console.log(`[SocketHandler] Received message:new event for message ${message.id}`)
       queryClient.setQueryData(["messages", message.conversationId], (old: any) => {
         if (!old?.pages) return old
         return {
@@ -127,11 +144,14 @@ function SocketHandler() {
       useSocketStore.getState().setOnlineUser(data.userId, data.online)
     })
 
+    console.log(`[SocketHandler] All event listeners registered`)
+
     return () => {
+      console.log(`[SocketHandler] Cleaning up socket`)
       socket.disconnect()
       useSocketStore.getState().setSocket(null)
     }
-  }, [accessToken])
+  }, [accessToken, conversations])
 
   return null
 }

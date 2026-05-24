@@ -13,12 +13,17 @@ export function signAccessToken(payload: AccessTokenPayload): string {
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
+    throw new Error("ACCESS_TOKEN_SECRET environment variable not set");
+  }
+
   try {
     return jwt.verify(
       token,
-      process.env.ACCESS_TOKEN_SECRET!,
+      process.env.ACCESS_TOKEN_SECRET,
     ) as AccessTokenPayload;
   } catch (err) {
-    throw new Error("Invalid access token");
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid access token: ${message}`);
   }
 }
