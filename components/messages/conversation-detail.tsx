@@ -27,7 +27,7 @@ export function ConversationDetail() {
 
   if (!selectedConversationId) {
     return (
-      <div className="chat-wallpaper hidden h-full min-w-0 md:flex md:items-center md:justify-center">
+      <div className="chat-wallpaper hidden h-full w-full min-w-0 flex-1 md:flex md:items-center md:justify-center">
         <div className="bg-card/80 rounded-full px-5 py-3 text-center shadow-sm backdrop-blur">
           <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
             <MessageCircle className="text-primary h-4 w-4" />
@@ -40,7 +40,7 @@ export function ConversationDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
         <div className="bg-card flex items-center gap-3 border-b px-4 py-3">
           <Skeleton className="h-10 w-10 rounded-full" />
           <div className="space-y-1">
@@ -62,7 +62,7 @@ export function ConversationDetail() {
 
   if (!conversation) {
     return (
-      <div className="chat-wallpaper flex h-full min-w-0 items-center justify-center">
+      <div className="chat-wallpaper flex h-full w-full min-w-0 flex-1 items-center justify-center">
         <p className="bg-card/80 text-muted-foreground rounded-full px-4 py-2 text-sm shadow-sm">
           Conversation not found
         </p>
@@ -85,7 +85,7 @@ export function ConversationDetail() {
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
       <div className="bg-card/95 flex h-14 shrink-0 items-center gap-2 border-b px-2.5 py-2 shadow-sm backdrop-blur sm:px-4">
         <Button
           variant="ghost"
