@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useUiStore } from "@/stores/ui-store"
-import { ConversationDetail } from "@/components/messages/conversation-detail"
+import { useEffect } from "react";
+import { useUiStore } from "@/stores/ui-store";
+import { ConversationDetail } from "@/components/messages/conversation-detail";
 
 export default function ConversationPage({
   params,
 }: {
-  params: Promise<{ conversationId: string }>
+  params: Promise<{ conversationId: string }>;
 }) {
-  return <ConversationPageInner params={params} />
+  return <ConversationPageInner params={params} />;
 }
 
 function ConversationPageInner({
   params,
 }: {
-  params: Promise<{ conversationId: string }>
+  params: Promise<{ conversationId: string }>;
 }) {
-  const { selectConversation } = useUiStore()
+  const { selectConversation } = useUiStore();
 
   useEffect(() => {
     params.then(({ conversationId }) => {
-      selectConversation(conversationId)
-    })
-    return () => selectConversation(null)
-  }, [params, selectConversation])
+      selectConversation(conversationId);
+    });
+    return () => selectConversation(null);
+  }, [params, selectConversation]);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-0 min-w-0">
       <ConversationDetail />
     </div>
-  )
+  );
 }

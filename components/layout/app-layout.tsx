@@ -1,23 +1,40 @@
-"use client"
+"use client";
 
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/header"
-import { CreateConversationDialog } from "@/components/messages/create-conversation-dialog"
-import { IncomingCallModal } from "@/components/call/incoming-call-modal"
-import { useCallStore } from "@/stores/call-store"
+import { useUiStore } from "@/stores/ui-store";
+import { Sidebar } from "@/components/layout/sidebar";
+import { CreateConversationDialog } from "@/components/messages/create-conversation-dialog";
+import { IncomingCallModal } from "@/components/call/incoming-call-modal";
+import { useCallStore } from "@/stores/call-store";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { incomingCall } = useCallStore()
+  const { incomingCall } = useCallStore();
+  const { selectedConversationId, sidebarOpen } = useUiStore();
+  const showSidebarOnMobile = sidebarOpen || !selectedConversationId;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="min-w-0 flex-1 overflow-hidden">{children}</main>
+    <div className="bg-background text-foreground flex h-dvh w-full overflow-hidden">
+      <div
+        className={
+          showSidebarOnMobile
+            ? "flex h-full w-full md:w-auto"
+            : "hidden md:flex"
+        }
+      >
+        <Sidebar />
+      </div>
+      <div
+        className={
+          showSidebarOnMobile
+            ? "hidden min-w-0 flex-1 flex-col overflow-hidden md:flex"
+            : "flex min-w-0 flex-1 flex-col overflow-hidden"
+        }
+      >
+        <main className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          {children}
+        </main>
       </div>
       <CreateConversationDialog />
       {incomingCall && <IncomingCallModal />}
     </div>
-  )
+  );
 }
