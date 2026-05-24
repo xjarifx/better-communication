@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react"
 import { useMessages } from "@/hooks/use-messages"
 import { useMessagesStore } from "@/stores/messages-store"
+import { useMessageQueueStore } from "@/stores/message-queue-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { MessageItem } from "@/components/messages/message-item"
 import { TypingIndicator } from "@/components/messages/typing-indicator"
@@ -21,15 +22,17 @@ export function MessageList({ conversationId }: { conversationId: string }) {
     isLoading,
   } = useMessages(conversationId)
   const { optimisticMessages } = useMessagesStore()
+  const { getConversationQueue } = useMessageQueueStore()
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const prevMessageCountRef = useRef(0)
 
   const allMessages = data?.pages.flatMap((page) => page.messages) ?? []
   const optimistic = optimisticMessages.get(conversationId) ?? []
+  const queued = getConversationQueue(conversationId)
 
-  // Merge optimistic messages with server messages
-  const mergedMessages = [...optimistic, ...allMessages]
+  // Merge optimistic and queued messages with server messages
+  const mergedMessages = [...optimistic, ...queued, ...allMessages]
   // Deduplicate by id
   const seen = new Set<string>()
   const dedupedMessages = mergedMessages.filter((m) => {

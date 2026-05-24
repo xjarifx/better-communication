@@ -8,8 +8,10 @@ import { useAuthStore } from "@/stores/auth-store"
 import { initSocket, disconnectSocket } from "@/lib/socket-client"
 import { useSocketStore } from "@/stores/socket-store"
 import { useMessagesStore } from "@/stores/messages-store"
+import { useMessageQueueStore } from "@/stores/message-queue-store"
 import { useCallStore } from "@/stores/call-store"
 import { useConversations } from "@/hooks/use-conversations"
+import { processMessageQueue } from "@/lib/message-queue"
 import type { Message } from "@/types/message"
 import type { IncomingCall } from "@/types/call"
 
@@ -28,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <SocketHandler />
+      <OnlineStatusHandler />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
@@ -79,6 +82,11 @@ function SocketHandler() {
 
     socket.on("message:new", (message: Message) => {
       console.log(`[SocketHandler] Received message:new event for message ${message.id}`)
+      
+      // Remove from queue if it was queued
+      const { removeFromQueue } = useMessageQueueStore.getState()
+      removeFromQueue(message.id)
+      
       queryClient.setQueryData(["messages", message.conversationId], (old: any) => {
         if (!old?.pages) return old
         return {
@@ -152,6 +160,30 @@ function SocketHandler() {
       useSocketStore.getState().setSocket(null)
     }
   }, [accessToken, conversations])
+
+  return null
+}
+
+function OnlineStatusHandler() {
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("[OnlineStatusHandler] App came online")
+      // Process the message queue when app comes online
+      processMessageQueue()
+    }
+
+    const handleOffline = () => {
+      console.log("[OnlineStatusHandler] App went offline")
+    }
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   return null
 }

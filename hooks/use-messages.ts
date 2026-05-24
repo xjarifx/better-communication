@@ -15,6 +15,8 @@ import type {
 import { useMessagesStore } from "@/stores/messages-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { useSocketStore } from "@/stores/socket-store"
+import { useMessageQueueStore, type QueuedMessage } from "@/stores/message-queue-store"
+import { enqueueMessage, isAppOnline } from "@/lib/message-queue"
 
 export function useMessages(conversationId: string | null) {
   return useInfiniteQuery<MessagesResponse>({
@@ -38,30 +40,130 @@ export function useSendMessage(conversationId: string) {
     mutationFn: (payload: SendMessagePayload) =>
       new Promise<Message>((resolve, reject) => {
         const user = useAuthStore.getState().user
+        const { socket, isConnected } = useSocketStore.getState()
+        const { removeFromQueue, updateMessageStatus } = useMessageQueueStore.getState()
+        
+        // Generate temp ID for this message
+        const tempId = `temp-${crypto.randomUUID()}`
+
+        // Check if we're online
+        const online = isAppOnline()
+
+        console.log(
+          `[useSendMessage] Attempting to send message. Online: ${online}, SocketConnected: ${isConnected}`
+        )
+
+        // If offline, add to queue instead of sending
+        if (!online) {
+          console.log(`[useSendMessage] Offline - adding message to queue`)
+          
+          const queuedMessage: QueuedMessage = {
+            id: tempId,
+            conversationId,
+            sender: {
+              id: user?.id ?? "",
+              displayName: user?.displayName ?? "",
+              avatarUrl: user?.avatarUrl ?? null,
+            },
+            type: payload.type ?? "TEXT",
+            content: payload.content ?? null,
+            fileUrl: payload.fileUrl ?? null,
+            thumbnailUrl: payload.thumbnailUrl ?? null,
+            fileName: payload.fileName ?? null,
+            fileSize: payload.fileSize ?? null,
+            createdAt: new Date().toISOString(),
+            status: "pending",
+            retryCount: 0,
+            originalPayload: payload,
+            queuedAt: new Date().toISOString(),
+          }
+
+          enqueueMessage(queuedMessage)
+          
+          resolve({
+            id: tempId,
+            conversationId,
+            sender: queuedMessage.sender,
+            type: payload.type ?? "TEXT",
+            content: payload.content ?? null,
+            fileUrl: payload.fileUrl ?? null,
+            thumbnailUrl: payload.thumbnailUrl ?? null,
+            fileName: payload.fileName ?? null,
+            fileSize: payload.fileSize ?? null,
+            createdAt: new Date().toISOString(),
+          })
+          return
+        }
+
+        // Try to send via socket
         let retries = 0
         const maxRetries = 50 // 5 seconds total (50 * 100ms)
         
         const attemptSend = () => {
-          // Get socket at each attempt, not once
-          const { socket, isConnected } = useSocketStore.getState()
+          // Get socket at each attempt
+          const { socket: currentSocket, isConnected: currentlyConnected } =
+            useSocketStore.getState()
           
-          console.log(`[useSendMessage] Attempt ${retries + 1}: Socket connected: ${isConnected}`)
+          console.log(
+            `[useSendMessage] Attempt ${retries + 1}: Socket connected: ${currentlyConnected}`
+          )
           
-          if (!socket || !isConnected) {
+          if (!currentSocket || !currentlyConnected) {
             if (retries < maxRetries) {
               retries++
-              // Retry after 100ms
               setTimeout(attemptSend, 100)
               return
             } else {
-              console.error(`[useSendMessage] Socket not connected after ${maxRetries} retries!`)
-              reject(new Error("Socket not connected"))
+              console.warn(`[useSendMessage] Socket not connected after ${maxRetries} retries`)
+              
+              // If socket fails, add to queue for later retry
+              console.log(
+                `[useSendMessage] Failed to send via socket - adding to queue for retry`
+              )
+              
+              const queuedMessage: QueuedMessage = {
+                id: tempId,
+                conversationId,
+                sender: {
+                  id: user?.id ?? "",
+                  displayName: user?.displayName ?? "",
+                  avatarUrl: user?.avatarUrl ?? null,
+                },
+                type: payload.type ?? "TEXT",
+                content: payload.content ?? null,
+                fileUrl: payload.fileUrl ?? null,
+                thumbnailUrl: payload.thumbnailUrl ?? null,
+                fileName: payload.fileName ?? null,
+                fileSize: payload.fileSize ?? null,
+                createdAt: new Date().toISOString(),
+                status: "pending",
+                retryCount: 0,
+                originalPayload: payload,
+                queuedAt: new Date().toISOString(),
+              }
+
+              enqueueMessage(queuedMessage)
+              
+              resolve({
+                id: tempId,
+                conversationId,
+                sender: queuedMessage.sender,
+                type: payload.type ?? "TEXT",
+                content: payload.content ?? null,
+                fileUrl: payload.fileUrl ?? null,
+                thumbnailUrl: payload.thumbnailUrl ?? null,
+                fileName: payload.fileName ?? null,
+                fileSize: payload.fileSize ?? null,
+                createdAt: new Date().toISOString(),
+              })
               return
             }
           }
 
-          console.log(`[useSendMessage] Emitting message:send to conversation ${conversationId}`)
-          socket.emit(
+          console.log(
+            `[useSendMessage] Emitting message:send to conversation ${conversationId}`
+          )
+          currentSocket.emit(
             "message:send",
             {
               conversationId,
@@ -77,9 +179,8 @@ export function useSendMessage(conversationId: string) {
               if (response.status === "error") {
                 reject(new Error(response.error ?? "Failed to send message"))
               } else {
-                // Return a temporary message with the ID from server
                 resolve({
-                  id: response.messageId ?? `temp-${crypto.randomUUID()}`,
+                  id: response.messageId ?? tempId,
                   conversationId,
                   sender: {
                     id: user?.id ?? "",
@@ -95,11 +196,10 @@ export function useSendMessage(conversationId: string) {
                   createdAt: new Date().toISOString(),
                 })
               }
-            },
+            }
           )
         }
         
-        // Start the send attempt
         attemptSend()
       }),
 
@@ -134,10 +234,14 @@ export function useSendMessage(conversationId: string) {
 
     onSuccess: (data, _variables, context) => {
       const { removeOptimisticMessage } = useMessagesStore.getState()
+      const { removeFromQueue } = useMessageQueueStore.getState()
       
-      if (context) {
+      // Remove from queue if it was queued
+      if (context?.tempId) {
+        removeFromQueue(context.tempId)
         removeOptimisticMessage(conversationId, context.tempId)
       }
+      
       queryClient.setQueryData(
         ["messages", conversationId],
         (old: InfiniteData<MessagesResponse> | undefined) => {

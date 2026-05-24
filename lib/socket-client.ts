@@ -1,4 +1,7 @@
 import { io, Socket } from "socket.io-client"
+import { processMessageQueue, startQueueProcessing, stopQueueProcessing } from "./message-queue"
+import { useSocketStore } from "@/stores/socket-store"
+import { useMessageQueueStore } from "@/stores/message-queue-store"
 
 let socket: Socket | null = null
 
@@ -26,10 +29,26 @@ export function initSocket(token: string): Socket {
 
   socket.on("connect", () => {
     console.log(`[socket-client] Connected! Socket ID: ${socket?.id}`)
+    
+    // Update socket store
+    const { setConnected } = useSocketStore.getState()
+    setConnected(true)
+    
+    // Hydrate queue from storage and start processing
+    const { hydrate } = useMessageQueueStore.getState()
+    hydrate()
+    startQueueProcessing()
   })
 
   socket.on("disconnect", () => {
     console.log(`[socket-client] Disconnected`)
+    
+    // Update socket store
+    const { setConnected } = useSocketStore.getState()
+    setConnected(false)
+    
+    // Stop queue processing when offline
+    stopQueueProcessing()
   })
 
   socket.on("connect_error", (error) => {

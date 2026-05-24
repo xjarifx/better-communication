@@ -14,7 +14,10 @@ import {
 import { cn, formatMessageTime, getInitials } from "@/lib/utils"
 import { useEditMessage, useDeleteMessage } from "@/hooks/use-messages"
 import { useSocketStore } from "@/stores/socket-store"
-import { Edit3, Trash2, Check, X } from "lucide-react"
+import { useMessageQueueStore } from "@/stores/message-queue-store"
+import { MessageStatusBadge } from "./message-status-badge"
+import { retryMessage } from "@/lib/message-queue"
+import { Edit3, Trash2, Check, X, RotateCw } from "lucide-react"
 
 export function MessageItem({
   message,
@@ -32,6 +35,12 @@ export function MessageItem({
   const { mutate: editMessage } = useEditMessage()
   const { mutate: deleteMessage } = useDeleteMessage()
   const { socket } = useSocketStore()
+  const { getQueuedMessage } = useMessageQueueStore()
+  
+  // Check if this message is in the queue
+  const queuedMessage = getQueuedMessage(message.id)
+  const messageStatus = queuedMessage?.status
+  const failureReason = queuedMessage?.failureReason
 
   const handleEdit = () => {
     if (!editContent.trim()) return
@@ -50,6 +59,12 @@ export function MessageItem({
   const handleContextEdit = () => {
     setEditContent(message.content ?? "")
     setIsEditing(true)
+  }
+  
+  const handleRetry = () => {
+    if (messageStatus === "failed") {
+      retryMessage(message.id)
+    }
   }
 
   return (
@@ -157,10 +172,33 @@ export function MessageItem({
               <span className="text-[10px] text-muted-foreground">
                 {formatMessageTime(message.createdAt)}
               </span>
+              
               {isOptimistic && (
                 <span className="text-[10px] text-muted-foreground italic">
                   Sending...
                 </span>
+              )}
+              
+              {messageStatus && isOwn && (
+                <>
+                  <MessageStatusBadge 
+                    status={messageStatus}
+                    failureReason={failureReason}
+                  />
+                  
+                  {messageStatus === "failed" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 gap-1 px-1.5 text-[10px]"
+                      onClick={handleRetry}
+                      title="Retry sending this message"
+                    >
+                      <RotateCw className="h-3 w-3" />
+                      Retry
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
