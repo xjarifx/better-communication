@@ -154,8 +154,7 @@ export function isAppOnline(): boolean {
     return false
   }
 
-  const { isConnected } = useSocketStore.getState()
-  return isConnected
+  return true
 }
 
 /**
