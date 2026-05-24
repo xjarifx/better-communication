@@ -81,13 +81,13 @@ export function MessageItem({
       <ContextMenuTrigger asChild>
         <div
           className={cn(
-            "group mb-1.5 flex w-full px-1 py-0.5",
+            "group mb-1.5 flex w-full px-0.5 py-0.5 sm:px-1",
             isOwn ? "justify-end" : "justify-start",
           )}
         >
           <div
             className={cn(
-              "flex max-w-[86%] min-w-0 gap-2 sm:max-w-[74%] lg:max-w-[66%]",
+              "flex max-w-[88%] min-w-0 gap-2 sm:max-w-[86%]",
               isOwn && "justify-end",
             )}
           >
@@ -120,7 +120,7 @@ export function MessageItem({
 
               <div
                 className={cn(
-                  "animate-in fade-in slide-in-from-bottom-2 relative max-w-full overflow-hidden rounded-[1.15rem] px-3.5 py-2 shadow-sm duration-300",
+                  "animate-in fade-in slide-in-from-bottom-2 relative max-w-full overflow-hidden rounded-[1.15rem] px-3.5 py-2 shadow-sm duration-300 sm:px-4",
                   isOwn
                     ? "bg-primary text-primary-foreground rounded-br-md"
                     : "bg-card text-card-foreground rounded-bl-md",

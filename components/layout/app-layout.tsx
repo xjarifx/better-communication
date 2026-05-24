@@ -9,15 +9,15 @@ import { useCallStore } from "@/stores/call-store";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { incomingCall } = useCallStore();
   const { selectedConversationId, sidebarOpen } = useUiStore();
-  const showSidebarOnMobile = sidebarOpen || !selectedConversationId;
+  const showSidebarOnMobile = !selectedConversationId || sidebarOpen;
 
   return (
-    <div className="bg-background text-foreground flex h-dvh w-screen overflow-hidden">
+    <div className="bg-background text-foreground flex h-dvh w-screen min-w-0 overflow-hidden">
       <div
         className={
           showSidebarOnMobile
-            ? "flex h-full w-full md:w-auto"
-            : "hidden md:flex"
+            ? "flex h-full w-full md:w-auto md:shrink-0"
+            : "hidden md:flex md:shrink-0"
         }
       >
         <Sidebar />

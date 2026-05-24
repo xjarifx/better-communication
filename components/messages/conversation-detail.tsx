@@ -86,7 +86,7 @@ export function ConversationDetail() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
-      <div className="bg-card/95 flex h-14 shrink-0 items-center gap-2 border-b px-3 py-2 shadow-sm backdrop-blur">
+      <div className="bg-card/95 flex h-14 shrink-0 items-center gap-2 border-b px-2.5 py-2 shadow-sm backdrop-blur sm:px-4">
         <Button
           variant="ghost"
           size="icon"
@@ -95,7 +95,7 @@ export function ConversationDetail() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Avatar className="ring-background h-10 w-10 shrink-0 ring-2">
+        <Avatar className="ring-background h-9 w-9 shrink-0 ring-2 sm:h-10 sm:w-10">
           <AvatarImage
             src={
               conversation.members.find((m) => m.id !== user?.id)?.avatarUrl ??
@@ -118,13 +118,17 @@ export function ConversationDetail() {
         <Button
           variant="ghost"
           size="icon"
-          className="text-primary hover:bg-accent rounded-full"
+          className="text-primary hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
           onClick={handleStartCall}
           disabled={isCreatingRoom}
         >
           <Phone className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full sm:h-10 sm:w-10"
+        >
           <MoreVertical className="h-5 w-5" />
         </Button>
       </div>

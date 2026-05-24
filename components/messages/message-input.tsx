@@ -49,13 +49,13 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card/95 flex min-w-0 shrink-0 items-center gap-1.5 border-t px-2 py-2 shadow-[0_-2px_12px_hsl(205_24%_30%/0.08)] backdrop-blur sm:gap-2 sm:px-3 sm:py-2.5"
+      className="bg-card/95 flex min-w-0 shrink-0 items-center gap-1.5 border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-2px_12px_hsl(205_24%_30%/0.08)] backdrop-blur sm:gap-2 sm:px-4 sm:py-3 lg:px-6 xl:px-8"
     >
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="text-muted-foreground hover:bg-accent hover:text-primary h-10 w-10 shrink-0 rounded-full"
+        className="text-muted-foreground hover:bg-accent hover:text-primary h-10 w-10 shrink-0 rounded-full sm:h-11 sm:w-11"
       >
         <Paperclip className="h-4 w-4" />
       </Button>
@@ -76,9 +76,8 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
         }}
         onKeyDown={handleKeyDown}
         placeholder="Message"
-        className="bg-muted placeholder:text-muted-foreground focus-visible:ring-primary h-11 min-w-0 flex-1 rounded-full border-0 px-4 text-sm shadow-inner focus-visible:ring-2 focus-visible:ring-offset-0"
+        className="bg-muted placeholder:text-muted-foreground focus-visible:ring-primary h-11 min-w-0 flex-1 rounded-full border-0 px-4 text-sm shadow-inner focus-visible:ring-2 focus-visible:ring-offset-0 sm:h-12"
         disabled={isPending}
-        autoFocus
       />
       <Button
         type="button"
@@ -92,7 +91,7 @@ export function MessageInput({ conversationId }: { conversationId: string }) {
         type="submit"
         size="icon"
         disabled={!content.trim() || isPending}
-        className="h-11 w-11 shrink-0 rounded-full shadow-sm"
+        className="h-11 w-11 shrink-0 rounded-full shadow-sm sm:h-12 sm:w-12"
       >
         <Send className="h-4 w-4" />
       </Button>

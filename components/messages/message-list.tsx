@@ -83,7 +83,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
       className="chat-wallpaper min-h-0 flex-1"
       onScrollCapture={handleScroll}
     >
-      <div className="flex min-h-full w-full flex-col px-2 py-3 sm:px-4">
+      <div className="flex min-h-full w-full flex-col px-2 py-3 sm:px-4 lg:px-6 xl:px-8">
         {isFetchingNextPage && (
           <div className="flex justify-center py-2">
             <Loader2 className="text-primary h-5 w-5 animate-spin" />

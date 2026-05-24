@@ -59,7 +59,7 @@ export function Sidebar() {
     }
   };
 
-  if (!sidebarOpen) {
+  if (!sidebarOpen && selectedConversationId) {
     return (
       <aside className="bg-card hidden h-full min-h-0 w-14 shrink-0 flex-col items-center border-r py-3 shadow-sm md:flex">
         <Button
@@ -89,7 +89,7 @@ export function Sidebar() {
   return (
     <div
       className={cn(
-        "bg-card flex h-full min-h-0 w-full flex-col border-r shadow-sm md:w-[360px] md:shrink-0",
+        "bg-card flex h-full min-h-0 w-full flex-col border-r shadow-sm md:w-[320px] md:shrink-0 lg:w-[360px]",
       )}
     >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
