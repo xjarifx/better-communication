@@ -114,13 +114,6 @@ export function Sidebar() {
                     <p className="truncate text-sm text-muted-foreground">
                       {conversation.lastMessage?.content ?? "No messages yet"}
                     </p>
-                    {conversation.unreadCount > 0 && (
-                      <span className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-medium text-primary-foreground">
-                        {conversation.unreadCount > 99
-                          ? "99+"
-                          : conversation.unreadCount}
-                      </span>
-                    )}
                   </div>
                 </div>
               </button>

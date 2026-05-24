@@ -20,7 +20,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
     isFetchingNextPage,
     isLoading,
   } = useMessages(conversationId)
-  const { optimisticMessages, resetUnread } = useMessagesStore()
+  const { optimisticMessages } = useMessagesStore()
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const prevMessageCountRef = useRef(0)

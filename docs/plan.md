@@ -409,7 +409,6 @@ interface ConversationSummary {
     senderId: string;
     createdAt: string;
   } | null;
-  unreadCount: number;
   updatedAt: string;
 }
 ```
@@ -1078,7 +1077,7 @@ better-communication/
 
 - [ ] Conversation model CRUD (API)
 - [ ] Duplicate DIRECT conversation detection
-- [ ] Conversation list API (with last message, unread count)
+- [ ] Conversation list API (with last message)
 - [ ] Conversation page UI
 - [ ] New conversation modal (search users, create 1:1 or group)
 - [ ] Conversation sidebar component

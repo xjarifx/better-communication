@@ -37,55 +37,70 @@ export function useSendMessage(conversationId: string) {
   return useMutation({
     mutationFn: (payload: SendMessagePayload) =>
       new Promise<Message>((resolve, reject) => {
-        // Get socket at mutation time, not hook creation time
-        const { socket } = useSocketStore.getState()
         const user = useAuthStore.getState().user
+        let retries = 0
+        const maxRetries = 50 // 5 seconds total (50 * 100ms)
         
-        console.log(`[useSendMessage] Sending message. Socket connected: ${socket?.connected}`)
-        
-        if (!socket || !socket.connected) {
-          console.error(`[useSendMessage] Socket not connected!`)
-          reject(new Error("Socket not connected"))
-          return
-        }
-
-        console.log(`[useSendMessage] Emitting message:send to conversation ${conversationId}`)
-        socket.emit(
-          "message:send",
-          {
-            conversationId,
-            type: payload.type ?? "TEXT",
-            content: payload.content ?? null,
-            fileUrl: payload.fileUrl ?? null,
-            thumbnailUrl: payload.thumbnailUrl ?? null,
-            fileName: payload.fileName ?? null,
-            fileSize: payload.fileSize ?? null,
-          },
-          (response: { status: string; messageId?: string; error?: string }) => {
-            console.log(`[useSendMessage] Received ack response:`, response)
-            if (response.status === "error") {
-              reject(new Error(response.error ?? "Failed to send message"))
+        const attemptSend = () => {
+          // Get socket at each attempt, not once
+          const { socket, isConnected } = useSocketStore.getState()
+          
+          console.log(`[useSendMessage] Attempt ${retries + 1}: Socket connected: ${isConnected}`)
+          
+          if (!socket || !isConnected) {
+            if (retries < maxRetries) {
+              retries++
+              // Retry after 100ms
+              setTimeout(attemptSend, 100)
+              return
             } else {
-              // Return a temporary message with the ID from server
-              resolve({
-                id: response.messageId ?? `temp-${crypto.randomUUID()}`,
-                conversationId,
-                sender: {
-                  id: user?.id ?? "",
-                  displayName: user?.displayName ?? "",
-                  avatarUrl: user?.avatarUrl ?? null,
-                },
-                type: payload.type ?? "TEXT",
-                content: payload.content ?? null,
-                fileUrl: payload.fileUrl ?? null,
-                thumbnailUrl: payload.thumbnailUrl ?? null,
-                fileName: payload.fileName ?? null,
-                fileSize: payload.fileSize ?? null,
-                createdAt: new Date().toISOString(),
-              })
+              console.error(`[useSendMessage] Socket not connected after ${maxRetries} retries!`)
+              reject(new Error("Socket not connected"))
+              return
             }
-          },
-        )
+          }
+
+          console.log(`[useSendMessage] Emitting message:send to conversation ${conversationId}`)
+          socket.emit(
+            "message:send",
+            {
+              conversationId,
+              type: payload.type ?? "TEXT",
+              content: payload.content ?? null,
+              fileUrl: payload.fileUrl ?? null,
+              thumbnailUrl: payload.thumbnailUrl ?? null,
+              fileName: payload.fileName ?? null,
+              fileSize: payload.fileSize ?? null,
+            },
+            (response: { status: string; messageId?: string; error?: string }) => {
+              console.log(`[useSendMessage] Received ack response:`, response)
+              if (response.status === "error") {
+                reject(new Error(response.error ?? "Failed to send message"))
+              } else {
+                // Return a temporary message with the ID from server
+                resolve({
+                  id: response.messageId ?? `temp-${crypto.randomUUID()}`,
+                  conversationId,
+                  sender: {
+                    id: user?.id ?? "",
+                    displayName: user?.displayName ?? "",
+                    avatarUrl: user?.avatarUrl ?? null,
+                  },
+                  type: payload.type ?? "TEXT",
+                  content: payload.content ?? null,
+                  fileUrl: payload.fileUrl ?? null,
+                  thumbnailUrl: payload.thumbnailUrl ?? null,
+                  fileName: payload.fileName ?? null,
+                  fileSize: payload.fileSize ?? null,
+                  createdAt: new Date().toISOString(),
+                })
+              }
+            },
+          )
+        }
+        
+        // Start the send attempt
+        attemptSend()
       }),
 
     onMutate: async (payload) => {

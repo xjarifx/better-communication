@@ -17,7 +17,6 @@ import { useCallStore } from "@/stores/call-store"
 import { useCreateRoom } from "@/hooks/use-call"
 import { useSocketStore } from "@/stores/socket-store"
 import { useRouter } from "next/navigation"
-import { useMessagesStore } from "@/stores/messages-store"
 
 export function ConversationDetail() {
   const { selectedConversationId, selectConversation, sidebarOpen } = useUiStore()
@@ -27,7 +26,6 @@ export function ConversationDetail() {
   const { socket } = useSocketStore()
   const { mutate: createRoom, isPending: isCreatingRoom } = useCreateRoom()
   const { activeCall } = useCallStore()
-  const { unreadCounts, resetUnread } = useMessagesStore()
 
   if (!selectedConversationId) {
     return (

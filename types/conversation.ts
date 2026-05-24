@@ -12,7 +12,6 @@ export interface Conversation {
   name: string | null
   members: ConversationMember[]
   lastMessage: { id: string; content: string | null; senderId: string; createdAt: string } | null
-  unreadCount: number
   updatedAt: string
 }
 

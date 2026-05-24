@@ -5,7 +5,6 @@ import {
   findConversationById,
   deleteConversation,
   findDirectConversationBetweenUsers,
-  countUnreadMessagesBatch,
 } from "./repository";
 import type { CreateConversationInput } from "./schema";
 
@@ -30,12 +29,8 @@ function formatConversation(
 export async function listConversations(userId: string) {
   const conversations = await findConversationsByUserId(userId);
 
-  const conversationIds = conversations.map((c) => c.id);
-  const unreadCounts = await countUnreadMessagesBatch(userId, conversationIds);
-
   return conversations.map((conv) => {
     const member = conv.members.find((m) => m.userId === userId)!;
-    const unreadCount = unreadCounts.get(conv.id) ?? 0;
 
     return {
       id: conv.id,
@@ -54,7 +49,6 @@ export async function listConversations(userId: string) {
             createdAt: conv.messages[0].createdAt.toISOString(),
           }
         : null,
-      unreadCount,
       updatedAt: conv.updatedAt.toISOString(),
     };
   });

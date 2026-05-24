@@ -80,7 +80,6 @@
   name: string | null;  // null for DIRECT
   members: { id: string; displayName: string; avatarUrl: string | null }[];
   lastMessage: { content: string | null; senderId: string; createdAt: string } | null;
-  unreadCount: number;
   updatedAt: string;    // ISO 8601
 }[]
 ```
