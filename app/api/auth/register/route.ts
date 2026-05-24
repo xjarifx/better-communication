@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { RegisterSchema } from "../../../../modules/auth/schema";
 import { registerUser } from "../../../../modules/auth/service";
 
@@ -19,5 +19,13 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: result.error }, { status: result.status });
   }
 
-  return Response.json(result, { status: 201 });
+  const response = NextResponse.json(result, { status: 201 });
+  response.cookies.set("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  return response;
 }
