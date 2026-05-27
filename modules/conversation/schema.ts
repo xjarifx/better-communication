@@ -24,3 +24,9 @@ export const CreateConversationSchema = z
   });
 
 export type CreateConversationInput = z.output<typeof CreateConversationSchema>;
+
+export const AddMembersSchema = z.object({
+  memberIds: z.array(z.string()).min(1),
+});
+
+export type AddMembersInput = z.output<typeof AddMembersSchema>;

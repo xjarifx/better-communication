@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   Dialog,
   DialogContent,
@@ -12,40 +12,83 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useUiStore } from "@/stores/ui-store"
 import { useCreateConversation } from "@/hooks/use-conversations"
+import { useAuthStore } from "@/stores/auth-store"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { apiClient } from "@/lib/api-client"
+import type { User } from "@/types/auth"
 
 export function CreateConversationDialog() {
   const { modals, closeModal } = useUiStore()
   const isOpen = modals.createConversation
+  const currentUser = useAuthStore((s) => s.user)
 
   const [conversationType, setConversationType] = useState<"DIRECT" | "GROUP">("DIRECT")
   const [groupName, setGroupName] = useState("")
-  const [memberEmails, setMemberEmails] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<User[]>([])
+  const [isSearching, setIsSearching] = useState(true)
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([])
   const { mutate: createConversation, isPending } = useCreateConversation()
 
   const resetForm = () => {
     setConversationType("DIRECT")
     setGroupName("")
-    setMemberEmails("")
+    setSearchQuery("")
+    setSearchResults([])
+    setSelectedUsers([])
   }
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const results = await apiClient.get<User[]>("/api/users/search", {
+          q: searchQuery,
+        })
+        setSearchResults(results)
+      } catch {
+        setSearchResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    }, searchQuery.trim() ? 300 : 0)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, isOpen])
+
+  const addUser = useCallback(
+    (user: User) => {
+      if (conversationType === "DIRECT") {
+        setSelectedUsers([user])
+      } else {
+        setSelectedUsers((prev) => {
+          if (prev.some((u) => u.id === user.id)) return prev
+          return [...prev, user]
+        })
+      }
+      setSearchQuery("")
+    },
+    [conversationType],
+  )
+
+  const removeUser = useCallback((userId: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId))
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (selectedUsers.length === 0) return
 
-    const emails = memberEmails
-      .split(",")
-      .map((e) => e.trim())
-      .filter(Boolean)
-
-    // For MVP, we just pass the emails (the API will find users by email)
-    // In a real app, you'd have a user search endpoint
     createConversation(
       {
         type: conversationType,
         name: conversationType === "GROUP" ? groupName : undefined,
-        memberIds: emails,
+        memberIds: selectedUsers.map((u) => u.id),
       },
       {
         onSuccess: () => {
@@ -55,6 +98,11 @@ export function CreateConversationDialog() {
       },
     )
   }
+
+  const isSelected = (userId: string) => selectedUsers.some((u) => u.id === userId)
+  const canSubmit =
+    selectedUsers.length > 0 &&
+    (conversationType === "DIRECT" || (conversationType === "GROUP" && groupName.trim()))
 
   return (
     <Dialog
@@ -66,7 +114,7 @@ export function CreateConversationDialog() {
         }
       }}
     >
-      <DialogContent className="border-0 bg-card/95 shadow-xl backdrop-blur">
+      <DialogContent className="border-0 bg-card/95 shadow-xl backdrop-blur sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New Conversation</DialogTitle>
           <DialogDescription>
@@ -77,9 +125,10 @@ export function CreateConversationDialog() {
         <form onSubmit={handleSubmit}>
           <Tabs
             defaultValue="DIRECT"
-            onValueChange={(v) =>
+            onValueChange={(v) => {
               setConversationType(v as "DIRECT" | "GROUP")
-            }
+              setSelectedUsers([])
+            }}
           >
             <TabsList className="w-full rounded-xl bg-muted">
               <TabsTrigger value="DIRECT" className="flex-1">
@@ -106,24 +155,149 @@ export function CreateConversationDialog() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="memberEmails">
+                <Label htmlFor="userSearch">
                   {conversationType === "DIRECT"
-                    ? "Other person's email"
-                    : "Member emails (comma separated)"}
+                    ? "Search user"
+                    : "Add members"}
                 </Label>
                 <Input
-                  id="memberEmails"
-                  placeholder={
-                    conversationType === "DIRECT"
-                      ? "user@example.com"
-                      : "user1@example.com, user2@example.com"
-                  }
+                  id="userSearch"
+                  placeholder="Search by name or email..."
                   className="rounded-xl bg-muted/70"
-                  value={memberEmails}
-                  onChange={(e) => setMemberEmails(e.target.value)}
-                  required
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    if (!e.target.value.trim()) {
+                      setSearchResults([])
+                    }
+                  }}
+                  autoComplete="off"
                 />
               </div>
+
+              <div className="rounded-xl border bg-muted/30">
+                {isSearching && searchResults.length === 0 ? (
+                  <p className="p-3 text-center text-sm text-muted-foreground">
+                    Searching...
+                  </p>
+                ) : searchResults.length === 0 ? (
+                  <p className="p-3 text-center text-sm text-muted-foreground">
+                    {searchQuery.trim() ? "No users found" : "No users available"}
+                  </p>
+                ) : (
+                    <div className="max-h-48 divide-y overflow-y-auto">
+                        {searchResults
+                          .filter((u) => u.id !== currentUser?.id)
+                          .map((user) => (
+                            <div
+                              key={user.id}
+                              className="flex items-center gap-3 px-3 py-2"
+                            >
+                              <Avatar className="h-8 w-8">
+                                {user.avatarUrl ? (
+                                  <AvatarImage src={user.avatarUrl} />
+                                ) : null}
+                                <AvatarFallback className="text-xs">
+                                  {user.displayName
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate text-sm font-medium">
+                                  {user.displayName}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {user.email}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant={
+                                  isSelected(user.id) ? "secondary" : "outline"
+                                }
+                                size="icon"
+                                className="h-7 w-7 shrink-0 rounded-full"
+                                disabled={
+                                  conversationType === "DIRECT" &&
+                                  selectedUsers.length > 0 &&
+                                  !isSelected(user.id)
+                                    ? selectedUsers[0]?.id !== user.id
+                                    : false
+                                }
+                                onClick={() => {
+                                  if (isSelected(user.id)) {
+                                    removeUser(user.id)
+                                  } else {
+                                    addUser(user)
+                                  }
+                                }}
+                              >
+                                {isSelected(user.id) ? (
+                                  <span className="text-lg leading-none">−</span>
+                                ) : (
+                                  <span className="text-lg leading-none">+</span>
+                                )}
+                              </Button>
+                            </div>
+                          ))}
+                      </div>
+                  )}
+                </div>
+
+              {selectedUsers.length > 0 && (
+                <div className="space-y-2">
+                  <Label>
+                    {conversationType === "DIRECT"
+                      ? "Recipient"
+                      : `Selected (${selectedUsers.length})`}
+                  </Label>
+                  <div className="rounded-xl border bg-muted/30">
+                    <div className="max-h-36 divide-y overflow-y-auto">
+                        {selectedUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center gap-3 px-3 py-2"
+                          >
+                            <Avatar className="h-8 w-8">
+                              {user.avatarUrl ? (
+                                <AvatarImage src={user.avatarUrl} />
+                              ) : null}
+                              <AvatarFallback className="text-xs">
+                                {user.displayName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate text-sm font-medium">
+                                {user.displayName}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {user.email}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
+                              onClick={() => removeUser(user.id)}
+                            >
+                              <span className="text-lg leading-none">−</span>
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                  </div>
+                </div>
+              )}
             </div>
           </Tabs>
 
@@ -131,11 +305,18 @@ export function CreateConversationDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => closeModal("createConversation")}
+              onClick={() => {
+                resetForm()
+                closeModal("createConversation")
+              }}
             >
               Cancel
             </Button>
-            <Button type="submit" className="rounded-xl" disabled={isPending}>
+            <Button
+              type="submit"
+              className="rounded-xl"
+              disabled={isPending || !canSubmit}
+            >
               {isPending ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>

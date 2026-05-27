@@ -5,8 +5,10 @@ import {
   findConversationById,
   deleteConversation,
   findDirectConversationBetweenUsers,
+  addMembers as repoAddMembers,
+  removeMember as repoRemoveMember,
 } from "./repository";
-import type { CreateConversationInput } from "./schema";
+import type { CreateConversationInput, AddMembersInput } from "./schema";
 
 function formatConversation(
   conv: Awaited<ReturnType<typeof findConversationById>>,
@@ -59,21 +61,20 @@ export async function createConversationForUser(
   userId: string,
 ) {
   const users = await prisma.user.findMany({
-    where: { email: { in: input.memberIds } },
-    select: { id: true, email: true },
+    where: { id: { in: input.memberIds } },
+    select: { id: true },
   });
 
   if (users.length !== input.memberIds.length) {
-    const found = new Set(users.map((u) => u.email));
-    const missing = input.memberIds.filter((e) => !found.has(e));
+    const found = new Set(users.map((u) => u.id));
+    const missing = input.memberIds.filter((id) => !found.has(id));
     return { error: `Users not found: ${missing.join(", ")}` as const, status: 404 };
   }
 
-  const resolvedMemberIds = users.map((u) => u.id);
-  const allMemberIds = [...new Set([...resolvedMemberIds, userId])];
+  const allMemberIds = [...new Set([...input.memberIds, userId])];
 
   if (input.type === "DIRECT") {
-    const otherUserId = resolvedMemberIds[0];
+    const otherUserId = input.memberIds[0];
     const existing = await findDirectConversationBetweenUsers(
       userId,
       otherUserId,
@@ -124,4 +125,63 @@ export async function removeConversation(id: string, userId: string) {
   }
 
   await deleteConversation(id);
+}
+
+export async function addMembersToConversation(
+  conversationId: string,
+  input: AddMembersInput,
+  userId: string,
+) {
+  const conversation = await findConversationById(conversationId);
+  if (!conversation) {
+    return { error: "Conversation not found" as const, status: 404 };
+  }
+  if (conversation.type !== "GROUP") {
+    return { error: "Can only add members to GROUP conversations" as const, status: 400 };
+  }
+
+  const membership = conversation.members.find((m) => m.userId === userId);
+  if (!membership) {
+    return { error: "Forbidden" as const, status: 403 };
+  }
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: input.memberIds } },
+    select: { id: true },
+  });
+
+  if (users.length !== input.memberIds.length) {
+    const found = new Set(users.map((u) => u.id));
+    const missing = input.memberIds.filter((id) => !found.has(id));
+    return { error: `Users not found: ${missing.join(", ")}` as const, status: 404 };
+  }
+
+  const updated = await repoAddMembers(conversationId, input.memberIds);
+  return { conversation: formatConversation(updated)! };
+}
+
+export async function removeMemberFromConversation(
+  conversationId: string,
+  targetUserId: string,
+  userId: string,
+) {
+  const conversation = await findConversationById(conversationId);
+  if (!conversation) {
+    return { error: "Conversation not found" as const, status: 404 };
+  }
+  if (conversation.type !== "GROUP") {
+    return { error: "Can only remove members from GROUP conversations" as const, status: 400 };
+  }
+
+  const membership = conversation.members.find((m) => m.userId === userId);
+  if (!membership) {
+    return { error: "Forbidden" as const, status: 403 };
+  }
+
+  const targetMembership = conversation.members.find((m) => m.userId === targetUserId);
+  if (!targetMembership) {
+    return { error: "User is not a member of this conversation" as const, status: 404 };
+  }
+
+  await repoRemoveMember(conversationId, targetUserId);
 }

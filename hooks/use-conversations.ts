@@ -54,6 +54,55 @@ export function useCreateConversation() {
   })
 }
 
+export function useAddMembers() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      conversationId,
+      memberIds,
+    }: {
+      conversationId: string
+      memberIds: string[]
+    }) =>
+      apiClient.post<{ conversation: Conversation }>(
+        `/api/conversations/${conversationId}/members`,
+        { memberIds },
+      ),
+
+    onSuccess: async (_data, { conversationId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["conversations"] })
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations", conversationId],
+      })
+    },
+  })
+}
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      conversationId,
+      userId,
+    }: {
+      conversationId: string
+      userId: string
+    }) =>
+      apiClient.delete(
+        `/api/conversations/${conversationId}/members?userId=${userId}`,
+      ),
+
+    onSuccess: async (_data, { conversationId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["conversations"] })
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations", conversationId],
+      })
+    },
+  })
+}
+
 export function useDeleteConversation() {
   const queryClient = useQueryClient()
   const socketStore = useSocketStore.getState()

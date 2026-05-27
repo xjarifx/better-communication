@@ -8,9 +8,15 @@ import { MessageInput } from "@/components/messages/message-input";
 import { CallBanner } from "@/components/messages/call-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getConversationDisplayName, getInitials } from "@/lib/utils";
-import { ArrowLeft, Phone, PhoneIncoming, MoreVertical, MessageCircle } from "lucide-react";
+import { ArrowLeft, Phone, PhoneIncoming, MoreVertical, MessageCircle, Users } from "lucide-react";
 import { useCreateRoom } from "@/hooks/use-call";
 import { useSocketStore } from "@/stores/socket-store";
 import { useCallStore } from "@/stores/call-store";
@@ -149,13 +155,27 @@ export function ConversationDetail() {
             <Phone className="h-5 w-5" />
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-full sm:h-10 sm:w-10"
-        >
-          <MoreVertical className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full sm:h-10 sm:w-10"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {conversation.type === "GROUP" && (
+              <DropdownMenuItem
+                onClick={() => useUiStore.getState().openManageMembers(conversation.id)}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Manage members
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <CallBanner conversationId={conversation.id} />

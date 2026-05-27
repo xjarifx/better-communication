@@ -99,4 +99,20 @@ export async function findMembership(conversationId: string, userId: string) {
   });
 }
 
+export async function addMembers(conversationId: string, memberIds: string[]) {
+  await prisma.conversationMember.createMany({
+    data: memberIds.map((userId) => ({ conversationId, userId })),
+    skipDuplicates: true,
+  });
+  return findConversationById(conversationId);
+}
+
+export async function removeMember(conversationId: string, userId: string) {
+  await prisma.conversationMember.delete({
+    where: {
+      conversationId_userId: { conversationId, userId },
+    },
+  });
+}
+
 

@@ -8,7 +8,9 @@ interface UiState {
     createConversation: boolean;
     fileUpload: boolean;
     settings: boolean;
+    manageMembers: boolean;
   };
+  manageMembersConversationId: string | null;
   selectConversation: (id: string | null) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -16,16 +18,20 @@ interface UiState {
   openModal: (name: keyof UiState["modals"]) => void;
   closeModal: (name: keyof UiState["modals"]) => void;
   closeAllModals: () => void;
+  openManageMembers: (conversationId: string) => void;
+  closeManageMembers: () => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
   selectedConversationId: null,
   sidebarOpen: true,
   theme: "light",
+  manageMembersConversationId: null,
   modals: {
     createConversation: false,
     fileUpload: false,
     settings: false,
+    manageMembers: false,
   },
 
   selectConversation: (id) =>
@@ -56,6 +62,19 @@ export const useUiStore = create<UiState>()((set) => ({
         createConversation: false,
         fileUpload: false,
         settings: false,
+        manageMembers: false,
       },
     }),
+
+  openManageMembers: (conversationId) =>
+    set((state) => ({
+      manageMembersConversationId: conversationId,
+      modals: { ...state.modals, manageMembers: true },
+    })),
+
+  closeManageMembers: () =>
+    set((state) => ({
+      manageMembersConversationId: null,
+      modals: { ...state.modals, manageMembers: false },
+    })),
 }));

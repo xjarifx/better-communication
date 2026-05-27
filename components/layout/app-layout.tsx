@@ -3,6 +3,7 @@
 import { useUiStore } from "@/stores/ui-store";
 import { Sidebar } from "@/components/layout/sidebar";
 import { CreateConversationDialog } from "@/components/messages/create-conversation-dialog";
+import { ManageMembersDialog } from "@/components/messages/manage-members-dialog";
 import { IncomingCallModal } from "@/components/call/incoming-call-modal";
 import { useCallStore } from "@/stores/call-store";
 
@@ -34,6 +35,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <CreateConversationDialog />
+      <ManageMembersDialog />
       {incomingCall && <IncomingCallModal />}
     </div>
   );
