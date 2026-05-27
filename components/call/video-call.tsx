@@ -17,7 +17,12 @@ export function VideoCall({
 }) {
   const { activeCall, endCall } = useCallStore()
   const { socket } = useSocketStore()
+  const { user } = useAuthStore()
   const router = useRouter()
+
+  const jitsiUrl = user?.displayName
+    ? `${roomUrl}#userInfo.displayName=${encodeURIComponent(user.displayName)}&config.prejoinPageEnabled=false`
+    : roomUrl
 
   return (
     <div className="flex h-full flex-col bg-black">
@@ -34,7 +39,7 @@ export function VideoCall({
           </p>
           <div className="mt-8">
             <iframe
-              src={roomUrl}
+              src={jitsiUrl}
               className="h-[400px] w-[600px] max-w-full rounded-lg"
               allow="camera; microphone; fullscreen"
             />
