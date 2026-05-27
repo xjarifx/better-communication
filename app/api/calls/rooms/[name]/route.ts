@@ -13,11 +13,7 @@ export async function GET(
 
   const { name } = await params;
 
-  const result = await getDailyRoom(name);
-
-  if ("error" in result) {
-    return Response.json({ error: result.error }, { status: result.status });
-  }
+  const result = getDailyRoom(name);
 
   return Response.json(result);
 }

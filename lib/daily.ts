@@ -1,59 +1,13 @@
-const DAILY_API_URL = "https://api.daily.co/v1";
-
-const headers = {
-  Authorization: `Bearer ${process.env.DAILY_API_KEY!}`,
-  "Content-Type": "application/json",
-};
-
-export async function createDailyRoom() {
-  const exp = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-
-  const res = await fetch(`${DAILY_API_URL}/rooms`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      properties: { exp },
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    return {
-      error: err?.message ?? "Failed to create room",
-      status: 502,
-    };
-  }
-
-  const data = await res.json();
-
-  return {
-    roomUrl: data.url as string,
-    roomName: data.name as string,
-  };
+export function createDailyRoom() {
+  const roomName = `bc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+  const roomUrl = `https://meet.jit.si/${roomName}`
+  return { roomUrl, roomName }
 }
 
-export async function getDailyRoom(name: string) {
-  const res = await fetch(`${DAILY_API_URL}/rooms/${name}`, {
-    headers,
-  });
-
-  if (res.status === 404) {
-    return { error: "Room not found" as const, status: 404 };
-  }
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    return {
-      error: err?.message ?? "Failed to get room",
-      status: 502,
-    };
-  }
-
-  const data = await res.json();
-
+export function getDailyRoom(name: string) {
   return {
-    roomUrl: data.url as string,
-    roomName: data.name as string,
-    active: false as boolean,
-  };
+    roomUrl: `https://meet.jit.si/${name}`,
+    roomName: name,
+    active: true,
+  }
 }

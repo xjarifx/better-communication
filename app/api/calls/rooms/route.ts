@@ -17,11 +17,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = await createDailyRoom();
-
-  if ("error" in result) {
-    return Response.json({ error: result.error }, { status: result.status });
-  }
+  const result = createDailyRoom();
 
   return Response.json(result, { status: 201 });
 }

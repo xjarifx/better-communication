@@ -32,9 +32,6 @@ export function VideoCall({
           <p className="mb-1 text-sm text-gray-400">
             Room: {roomName}
           </p>
-          <p className="text-xs text-gray-500">
-            Daily.co integration - embed your video component here
-          </p>
           <div className="mt-8">
             <iframe
               src={roomUrl}
