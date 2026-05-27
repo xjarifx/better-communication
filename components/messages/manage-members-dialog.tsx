@@ -28,10 +28,10 @@ export function ManageMembersDialog() {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<User[]>([])
-  const [isSearching, setIsSearching] = useState(false)
+  const [isSearching, setIsSearching] = useState(true)
 
   useEffect(() => {
-    if (!searchQuery.trim()) return
+    if (!manageMembersConversationId) return
 
     const timer = setTimeout(async () => {
       setIsSearching(true)
@@ -45,10 +45,10 @@ export function ManageMembersDialog() {
       } finally {
         setIsSearching(false)
       }
-    }, 300)
+    }, searchQuery.trim() ? 300 : 0)
 
     return () => clearTimeout(timer)
-  }, [searchQuery])
+  }, [searchQuery, manageMembersConversationId])
 
   const existingMemberIds = new Set(conversation?.members.map((m) => m.id) ?? [])
 
@@ -95,81 +95,74 @@ export function ManageMembersDialog() {
               placeholder="Search by name or email to add..."
               className="rounded-xl bg-muted/70"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                if (!e.target.value.trim()) {
-                  setSearchResults([])
-                }
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
             />
           </div>
 
-          {searchQuery.trim() && (
-            <div className="rounded-xl border bg-muted/30">
-              {isSearching ? (
-                <p className="p-3 text-center text-sm text-muted-foreground">
-                  Searching...
-                </p>
-              ) : searchResults.length === 0 ? (
-                <p className="p-3 text-center text-sm text-muted-foreground">
-                  No users found
-                </p>
-              ) : (
-                <div className="max-h-48 divide-y overflow-y-auto">
-                  {searchResults
-                    .filter((u) => u.id !== currentUser?.id)
-                    .map((user) => {
-                      const isMember = existingMemberIds.has(user.id)
-                      return (
-                        <div
-                          key={user.id}
-                          className="flex items-center gap-3 px-3 py-2"
-                        >
-                          <Avatar className="h-8 w-8">
-                            {user.avatarUrl ? (
-                              <AvatarImage src={user.avatarUrl} />
-                            ) : null}
-                            <AvatarFallback className="text-xs">
-                              {user.displayName
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="truncate text-sm font-medium">
-                              {user.displayName}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-                          {isMember ? (
-                            <span className="text-xs text-muted-foreground shrink-0">
-                              Member
-                            </span>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 shrink-0 rounded-full"
-                              onClick={() => handleAdd(user)}
-                              disabled={isAdding}
-                            >
-                              <span className="text-lg leading-none">+</span>
-                            </Button>
-                          )}
+          <div className="rounded-xl border bg-muted/30">
+            {isSearching ? (
+              <p className="p-3 text-center text-sm text-muted-foreground">
+                Searching...
+              </p>
+            ) : searchResults.length === 0 ? (
+              <p className="p-3 text-center text-sm text-muted-foreground">
+                {searchQuery.trim() ? "No users found" : "No users available"}
+              </p>
+            ) : (
+              <div className="max-h-48 divide-y overflow-y-auto">
+                {searchResults
+                  .filter((u) => u.id !== currentUser?.id)
+                  .map((user) => {
+                    const isMember = existingMemberIds.has(user.id)
+                    return (
+                      <div
+                        key={user.id}
+                        className="flex items-center gap-3 px-3 py-2"
+                      >
+                        <Avatar className="h-8 w-8">
+                          {user.avatarUrl ? (
+                            <AvatarImage src={user.avatarUrl} />
+                          ) : null}
+                          <AvatarFallback className="text-xs">
+                            {user.displayName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {user.displayName}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {user.email}
+                          </p>
                         </div>
-                      )
-                    })}
-                </div>
-              )}
-            </div>
-          )}
+                        {isMember ? (
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            Member
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 rounded-full"
+                            onClick={() => handleAdd(user)}
+                            disabled={isAdding}
+                          >
+                            <span className="text-lg leading-none">+</span>
+                          </Button>
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
+          </div>
 
           <div className="space-y-2">
             <p className="text-sm font-medium">Current members</p>
