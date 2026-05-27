@@ -10,9 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getConversationDisplayName, getInitials } from "@/lib/utils";
-import { ArrowLeft, Phone, MoreVertical, MessageCircle } from "lucide-react";
+import { ArrowLeft, Phone, PhoneIncoming, MoreVertical, MessageCircle } from "lucide-react";
 import { useCreateRoom } from "@/hooks/use-call";
 import { useSocketStore } from "@/stores/socket-store";
+import { useCallStore } from "@/stores/call-store";
 import { useRouter } from "next/navigation";
 
 export function ConversationDetail() {
@@ -23,6 +24,7 @@ export function ConversationDetail() {
     selectedConversationId,
   );
   const { socket } = useSocketStore();
+  const { conversationCalls, setConversationCall, setActiveCall } = useCallStore();
   const { mutate: createRoom, isPending: isCreatingRoom } = useCreateRoom();
 
   if (!selectedConversationId) {
@@ -75,6 +77,16 @@ export function ConversationDetail() {
   const handleStartCall = () => {
     createRoom(conversation.id, {
       onSuccess: (data) => {
+        setConversationCall(conversation.id, {
+          roomUrl: data.roomUrl,
+          roomName: data.roomName,
+        });
+        setActiveCall({
+          conversationId: conversation.id,
+          roomUrl: data.roomUrl,
+          roomName: data.roomName,
+          startedAt: new Date().toISOString(),
+        });
         socket?.emit("call:start", {
           conversationId: conversation.id,
           roomUrl: data.roomUrl,
@@ -83,6 +95,8 @@ export function ConversationDetail() {
       },
     });
   };
+
+  const activeConversationCall = conversationCalls[conversation.id] ?? null;
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
@@ -115,15 +129,26 @@ export function ConversationDetail() {
               : "Active now"}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-primary hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
-          onClick={handleStartCall}
-          disabled={isCreatingRoom}
-        >
-          <Phone className="h-5 w-5" />
-        </Button>
+        {activeConversationCall ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-green-600 hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
+            onClick={() => router.push(`/call/${activeConversationCall.roomName}`)}
+          >
+            <PhoneIncoming className="h-5 w-5" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
+            onClick={handleStartCall}
+            disabled={isCreatingRoom}
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

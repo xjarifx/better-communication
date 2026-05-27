@@ -15,7 +15,7 @@ export function VideoCall({
   roomName: string
   roomUrl: string
 }) {
-  const { endCall } = useCallStore()
+  const { activeCall, endCall } = useCallStore()
   const { socket } = useSocketStore()
   const router = useRouter()
 
@@ -55,7 +55,7 @@ export function VideoCall({
           size="icon"
           className="h-14 w-14 rounded-full"
           onClick={() => {
-            socket?.emit("call:end", { conversationId: "" })
+            socket?.emit("call:end", { conversationId: activeCall?.conversationId ?? "" })
             endCall()
             router.push("/messages")
           }}
