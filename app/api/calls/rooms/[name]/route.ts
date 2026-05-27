@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { authenticate } from "../../../../../lib/auth";
-import { getDailyRoom } from "../../../../../lib/daily";
+import { getJitsiRoom } from "../../../../../lib/jitsi";
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
 
   const { name } = await params;
 
-  const result = getDailyRoom(name);
+  const result = getJitsiRoom(name);
 
   return Response.json(result);
 }

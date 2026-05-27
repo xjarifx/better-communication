@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { authenticate } from "../../../../lib/auth";
-import { createDailyRoom } from "../../../../lib/daily";
+import { createJitsiRoom } from "../../../../lib/jitsi";
 
 export async function POST(request: NextRequest) {
   const auth = authenticate(request);
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = createDailyRoom();
+  const result = createJitsiRoom();
 
   return Response.json(result, { status: 201 });
 }

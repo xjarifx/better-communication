@@ -49,13 +49,13 @@
 | -------------------- | -------------------------------------------------------------------------------------- |
 | **Access Token**     | Short-lived JWT (15 min) sent as `Authorization: Bearer` header                        |
 | **Conversation**     | A chat session between 2+ users; can be DIRECT (1:1) or GROUP (N:N)                    |
-| **Daily.co**         | Third-party video API; provides room-based video calls via pre-built UI                |
+| **Jitsi Meet**       | Open-source video conferencing; embedded via iframe using public meet.jit.si           |
 | **ImageKit**         | Third-party media optimization & upload service; handles image resizing, thumbnails    |
 | **MVP**              | Minimum Viable Product — smallest feature set that provides value and enables feedback |
 | **Neon**             | Serverless PostgreSQL provider with connection pooling                                 |
 | **Prisma**           | Type-safe ORM for database access; generates TypeScript types from schema              |
 | **Room (Socket.IO)** | Server-side channel; users in the same room receive each other's events                |
-| **Room (Daily.co)**  | Virtual video call space identified by a URL; participants join via browser            |
+| **Room (Jitsi)**     | Virtual video call space identified by a URL; participants join via browser            |
 | **Zod**              | Runtime schema validation library; infers TypeScript types from validation schemas     |
 
 ---
@@ -103,8 +103,8 @@
 
 External Services:
 ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-│   Daily.co     │    │   ImageKit     │    │   JWT Secret   │
-│ Video API      │    │ Media Upload   │    │ (application)  │
+│  Jitsi Meet    │    │   ImageKit     │    │   JWT Secret   │
+│ (public iframe)│    │ Media Upload   │    │ (application)  │
 └────────────────┘    └────────────────┘    └────────────────┘
 ```
 
@@ -151,7 +151,7 @@ Socket.IO Server
 | **Auth**          | jsonwebtoken (JWT) | 9.x     | Bearer token authentication             |
 | **Validation**    | Zod                | 4.x     | Runtime input validation                |
 | **Real-time**     | Socket.IO          | 4.x     | Bidirectional event-based communication |
-| **Video**         | Daily.co           | —       | Room-based video calling                |
+| **Video**         | Jitsi Meet         | —       | Room-based video calling (public iframe)|
 | **Media**         | ImageKit           | —       | Image upload, optimization, thumbnails  |
 | **Styling**       | Tailwind CSS       | 4.x     | Utility-first CSS framework             |
 | **Password**      | bcrypt             | 6.x     | Password hashing                        |
@@ -181,8 +181,7 @@ IMAGEKIT_PUBLIC_KEY
 IMAGEKIT_PRIVATE_KEY
 IMAGEKIT_URL_ENDPOINT
 
-# Video (Daily.co)
-DAILY_API_KEY
+# Video (Jitsi Meet - public, no API key needed)
 
 # Runtime
 NODE_ENV              "development" | "production" | "test"
@@ -212,14 +211,14 @@ NODE_ENV              "development" | "production" | "test"
 | **Consequence** | Users may need to log in more frequently; can add refresh tokens post-MVP if UX becomes a problem                                                                                  |
 | **Alternative** | OAuth2 with refresh tokens — more standard but over-engineered for MVP                                                                                                             |
 
-### ADR-003: Daily.co Pre-built UI for Video
+### ADR-003: Jitsi Meet for Video (Self-Hosted Alternative)
 
 | Field           | Value                                                                                                                                                                                                                                                |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Context**     | Need video calling capability                                                                                                                                                                                                                        |
-| **Decision**    | Use Daily.co pre-built UI components instead of raw WebRTC                                                                                                                                                                                           |
-| **Rationale**   | WebRTC requires STUN/TURN server management, signaling, ICE negotiation, and complex state management. Daily.co abstracts all of this. Pre-built UI provides camera/mic controls, screen sharing, participant grid in under 100 lines of React code. |
-| **Consequence** | Vendor lock-in; external API dependency. Acceptable for MVP — can migrate to custom WebRTC later if needed                                                                                                                                           |
+| **Decision**    | Embed Jitsi Meet via iframe (public meet.jit.si)                                                                                                                                                                                                     |
+| **Rationale**   | WebRTC requires STUN/TURN server management, signaling, ICE negotiation, and complex state management. Jitsi abstracts all of this. Embedding via iframe requires zero API keys or server setup. Room names generated client-side with UUID prefix. |
+| **Consequence** | Relies on Jitsi's public infrastructure — acceptable for MVP/demo. Can self-host Jitsi Meet server or migrate to LiveKit/WebRTC later.                                                                                                                |
 
 ### ADR-004: Cursor-Based Pagination for Messages
 
@@ -567,7 +566,7 @@ Uploads a file to ImageKit.
 
 #### `POST /api/calls/rooms`
 
-Creates a Daily.co room for video calling.
+Creates a Jitsi Meet room for video calling (generates room name, returns meet.jit.si URL).
 
 **Request Body:**
 
@@ -588,7 +587,7 @@ Creates a Daily.co room for video calling.
 
 #### `GET /api/calls/rooms/:name`
 
-Gets the status of a Daily.co room.
+Returns room info for a Jitsi Meet room.
 
 **Response** `200 OK`:
 
@@ -832,31 +831,28 @@ Sender Client            Socket.IO Server                 DB          Recipient
 ### 10.3 Initiating a Video Call
 
 ```
-Caller Client           Next.js          Daily.co API        Socket.IO        Recipient
-     │                    │                  │                  │                │
-     │ POST /api/calls/   │                  │                  │                │
-     │ rooms              │                  │                  │                │
-     │ { conversationId } │                  │                  │                │
-     │───────────────────→│                  │                  │                │
-     │                    │ POST /rooms      │                  │                │
-     │                    │ (Daily REST API) │                  │                │
-     │                    │─────────────────→│                  │                │
-     │                    │←── { url, name }─│                  │                │
-     │                    │                  │                  │                │
-     │← 201 { roomUrl,    │                  │                  │                │
-     │   roomName }       │                  │                  │                │
-     │                    │                  │                  │                │
-     │ call:start         │                  │                  │                │
-     │ { conversationId,  │                  │                  │                │
-     │   roomUrl }        │                  │                  │                │
-     │─────────────────────────────────────────────────────────→│                │
-     │                    │                  │                  │                │
-     │                    │                  │                  │ call:incoming  │
-     │                    │                  │                  │────────────────→│
-     │                    │                  │                  │                │
-     │ Open Daily prebuilt│                  │                  │  Open Daily    │
-     │ UI with roomUrl    │                  │                  │  prebuilt UI   │
-     │                    │                  │                  │  with roomUrl  │
+Caller Client              Next.js              Jitsi Meet            Socket.IO        Recipient
+     │                         │                    │                     │                │
+     │ POST /api/calls/rooms   │                    │                     │                │
+     │ { conversationId }      │                    │                     │                │
+     │────────────────────────→│                    │                     │                │
+     │                         │ (generate room     │                     │                │
+     │                         │  name, return URL) │                     │                │
+     │                         │                    │                     │                │
+     │← 201 { roomUrl,         │                    │                     │                │
+     │   roomName }            │                    │                     │                │
+     │                         │                    │                     │                │
+     │ call:start              │                    │                     │                │
+     │ { conversationId,       │                    │                     │                │
+     │   roomUrl }             │                    │                     │                │
+     │───────────────────────────────────────────────────────────────────→│                │
+     │                         │                    │                     │                │
+     │                         │                    │                     │ call:incoming  │
+     │                         │                    │                     │────────────────→│
+     │                         │                    │                     │                │
+     │ Open Jitsi iframe       │                    │                     │  Open Jitsi    │
+     │ with roomUrl            │                    │                     │  iframe        │
+     │                         │                    │                     │  with roomUrl  │
 ```
 
 ---
@@ -871,7 +867,7 @@ Caller Client           Next.js          Daily.co API        Socket.IO        Re
 /register                   → RegisterPage (email, password, displayName form)
 /conversations              → ConversationListPage (sidebar + empty state)
 /conversations/:id          → ConversationPage (sidebar + chat view)
-/conversations/:id/call     → CallPage (overlay with Daily.co)
+/conversations/:id/call     → CallPage (overlay with Jitsi Meet)
 ```
 
 ### 11.2 Component Tree
@@ -903,7 +899,7 @@ Caller Client           Next.js          Daily.co API        Socket.IO        Re
             │           └── file upload button
             │
             └── <CallInterface>    (in-call overlay)
-                  └── Daily.co prebuilt <DailyCall />
+                  └── Jitsi Meet iframe
     </Layout>
   </SocketProvider>
 </AuthProvider>
@@ -997,7 +993,7 @@ better-communication/
 │   ├── password.ts               # bcrypt hash/verify
 │   ├── prisma.ts                 # Prisma client singleton
 │   ├── api-error.ts              # Standardized error response helper
-│   ├── daily.ts                  # Daily.co REST API client
+│   ├── jitsi.ts                  # Jitsi Meet room URL generator
 │   └── imagekit.ts               # ImageKit upload client
 │
 ├── components/
@@ -1115,11 +1111,11 @@ better-communication/
 
 **Estimated effort:** 2-3 days
 
-- [ ] Daily.co REST API client (create room, get room)
+- [ ] Jitsi Meet room URL generator
 - [ ] Create room API endpoint
 - [ ] Call start/end Socket.IO events
 - [ ] Incoming call notification UI
-- [ ] Daily prebuilt UI integration
+- [ ] Jitsi Meet iframe integration
 - [ ] Call overlay page
 - [ ] Handle concurrent calls (only one active call per conversation)
 
@@ -1154,7 +1150,7 @@ better-communication/
 | R2  | Socket.IO server crashes            | Low         | High     | Auto-restart via process manager (PM2 / Docker restart policy); messages also persisted via HTTP fallback |
 | R3  | Database connection pool exhaustion | Medium      | High     | Prisma handles pooling via Neon adapter; monitor connection count; set connection limit in Prisma config  |
 | R4  | ImageKit API rate limit             | Low         | Medium   | Implement client-side file size limits; queue uploads if needed                                           |
-| R5  | Daily.co API outage                 | Low         | Medium   | Show "Video call unavailable" gracefully; chat remains functional                                         |
+| R5  | Jitsi Meet public server outage     | Low         | Medium   | Show "Video call unavailable" gracefully; chat remains functional; can self-host fallback                 |
 | R6  | WebSocket connection drops (mobile) | High        | Low      | Socket.IO auto-reconnects with exponential backoff; queued messages resent on reconnect                   |
 | R7  | SQL injection via message content   | Low         | Critical | Prisma parameterizes all queries; Zod validates input shape; never concatenate user input into SQL        |
 | R8  | XSS via message content             | Medium      | High     | React escapes HTML by default; sanitize any raw HTML rendering with DOMPurify if needed                   |

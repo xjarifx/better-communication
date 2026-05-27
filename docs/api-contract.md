@@ -288,7 +288,7 @@ file: File  // The file to upload
 
 ## Video Call Endpoints
 
-### `POST /api/calls/rooms` — Create Daily.co room
+### `POST /api/calls/rooms` — Create Jitsi Meet room
 
 **Auth:** Required
 
