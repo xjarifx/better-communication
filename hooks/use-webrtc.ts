@@ -19,16 +19,45 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
+  const [mediaError, setMediaError] = useState<string | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const { socket } = useSocketStore()
 
   useEffect(() => {
+    const constraints = { audio: true, video: true }
+
     navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
+      .getUserMedia(constraints)
       .then(setLocalStream)
-      .catch((err) => console.error("Failed to get media devices:", err))
+      .catch(async (err: DOMException) => {
+        if (err.name === "NotFoundError") {
+          try {
+            const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            setLocalStream(audioOnly)
+            setIsVideoOff(true)
+            return
+          } catch {
+            // audio also not found
+          }
+          try {
+            const videoOnly = await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+            setLocalStream(videoOnly)
+            setIsMuted(true)
+            return
+          } catch {
+            // video also not found
+          }
+        }
+        const message = err.name === "NotFoundError"
+          ? "No camera or microphone found"
+          : err.name === "NotAllowedError"
+            ? "Camera and microphone access denied"
+            : `Camera/microphone error: ${err.message}`
+        console.error("Failed to get media devices:", message)
+        setMediaError(message)
+      })
   }, [])
 
   useEffect(() => {
@@ -146,6 +175,7 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
   return {
     localStream,
     remoteStream,
+    mediaError,
     isMuted,
     isVideoOff,
     isConnected,

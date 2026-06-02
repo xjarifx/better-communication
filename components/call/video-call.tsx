@@ -30,6 +30,7 @@ export function VideoCall({
   const {
     localStream,
     remoteStream,
+    mediaError,
     isMuted,
     isVideoOff,
     isConnected,
@@ -57,7 +58,21 @@ export function VideoCall({
   return (
     <div className="flex h-full flex-col bg-black">
       <div className="relative flex flex-1 items-center justify-center">
-        {remoteStream ? (
+        {mediaError ? (
+          <div className="text-center max-w-md px-4">
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-red-500">
+              <PhoneOff className="h-12 w-12 rotate-135 text-white" />
+            </div>
+            <p className="mb-2 text-xl font-semibold text-white">Cannot start call</p>
+            <p className="mb-4 text-sm text-gray-400">{mediaError}</p>
+            <button
+              className="rounded bg-white px-4 py-2 text-black"
+              onClick={() => router.push("/messages")}
+            >
+              Go back
+            </button>
+          </div>
+        ) : remoteStream ? (
           <video
             ref={remoteVideoRef}
             autoPlay
