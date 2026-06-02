@@ -163,14 +163,9 @@ function SocketHandler() {
 
     socket.on("call:incoming", (call: IncomingCall) => {
       useCallStore.getState().setIncomingCall(call)
-      useCallStore.getState().setConversationCall(call.conversationId, {
-        roomUrl: call.roomUrl,
-        roomName: call.roomUrl.split("/").pop() ?? "",
-      })
     })
 
     socket.on("call:ended", (data: { conversationId: string }) => {
-      useCallStore.getState().removeConversationCall(data.conversationId)
       const activeCall = useCallStore.getState().activeCall
       if (activeCall?.conversationId === data.conversationId) {
         useCallStore.getState().endCall()

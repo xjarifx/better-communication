@@ -3,7 +3,7 @@
 import { useCallStore } from "@/stores/call-store"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Phone, PhoneOff } from "lucide-react"
+import { Phone } from "lucide-react"
 
 export function CallBanner({
   conversationId,
@@ -28,7 +28,7 @@ export function CallBanner({
           variant="outline"
           size="sm"
           className="border-green-600 text-green-700"
-          onClick={() => router.push(`/call/${activeCall.roomName}`)}
+          onClick={() => router.push(`/call/${activeCall.conversationId}`)}
         >
           Join
         </Button>

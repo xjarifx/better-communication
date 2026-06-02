@@ -1,108 +1,124 @@
 "use client"
 
+import { useRef, useEffect } from "react"
 import { useCallStore } from "@/stores/call-store"
 import { useSocketStore } from "@/stores/socket-store"
-import { useAuthStore } from "@/stores/auth-store"
+import { useWebRTC } from "@/hooks/use-webrtc"
 import { Button } from "@/components/ui/button"
-import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from "lucide-react"
-import { useState, useEffect } from "react"
+import { PhoneOff, Mic, MicOff, Video, VideoOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function VideoCall({
-  roomName,
-  roomUrl,
+  conversationId,
+  isCaller,
 }: {
-  roomName: string
-  roomUrl: string
+  conversationId: string
+  isCaller: boolean
 }) {
-  const { activeCall, endCall } = useCallStore()
+  const { endCall: storeEndCall } = useCallStore()
   const { socket } = useSocketStore()
-  const { user } = useAuthStore()
   const router = useRouter()
+  const localVideoRef = useRef<HTMLVideoElement>(null)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
 
-  const jitsiUrl = user?.displayName
-    ? `${roomUrl}#userInfo.displayName=${encodeURIComponent(user.displayName)}&config.prejoinPageEnabled=false`
-    : roomUrl
+  const handleEndCall = () => {
+    socket?.emit("call:end", { conversationId })
+    storeEndCall()
+    router.push("/messages")
+  }
+
+  const {
+    localStream,
+    remoteStream,
+    isMuted,
+    isVideoOff,
+    isConnected,
+    toggleMute,
+    toggleVideo,
+    endCall,
+  } = useWebRTC({
+    conversationId,
+    isCaller,
+    onEndCall: handleEndCall,
+  })
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream
+    }
+  }, [localStream])
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream
+    }
+  }, [remoteStream])
 
   return (
     <div className="flex h-full flex-col bg-black">
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-green-500">
-            <Phone className="h-12 w-12 text-white" />
+      <div className="relative flex flex-1 items-center justify-center">
+        {remoteStream ? (
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-green-500">
+              <PhoneOff className="h-12 w-12 rotate-135 text-white" />
+            </div>
+            <p className="mb-2 text-xl font-semibold text-white">
+              {isConnected ? "Connected" : "Connecting..."}
+            </p>
+            <p className="mb-1 text-sm text-gray-400">
+              {isCaller ? "Waiting for the other person to join..." : "Joining call..."}
+            </p>
           </div>
-          <p className="mb-2 text-xl font-semibold text-white">
-            Connected
-          </p>
-          <p className="mb-1 text-sm text-gray-400">
-            Room: {roomName}
-          </p>
-          <div className="mt-8">
-            <iframe
-              src={jitsiUrl}
-              className="h-[400px] w-[600px] max-w-full rounded-lg"
-              allow="camera; microphone; fullscreen"
+        )}
+
+        {localStream && (
+          <div className="absolute bottom-4 right-4 z-10">
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`rounded-lg border-2 object-cover ${
+                isVideoOff ? "border-red-500" : "border-white/30"
+              } ${remoteStream ? "h-32 w-44" : "h-48 w-64"}`}
             />
           </div>
-        </div>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-4 border-t border-gray-800 p-4">
         <Button
           variant="secondary"
           size="icon"
-          className="h-12 w-12 rounded-full"
+          className={`h-12 w-12 rounded-full ${isMuted ? "bg-red-600 hover:bg-red-700" : ""}`}
+          onClick={toggleMute}
         >
-          <Mic className="h-6 w-6" />
+          {isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className={`h-12 w-12 rounded-full ${isVideoOff ? "bg-red-600 hover:bg-red-700" : ""}`}
+          onClick={toggleVideo}
+        >
+          {isVideoOff ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
         </Button>
         <Button
           variant="destructive"
           size="icon"
           className="h-14 w-14 rounded-full"
-          onClick={() => {
-            socket?.emit("call:end", { conversationId: activeCall?.conversationId ?? "" })
-            endCall()
-            router.push("/messages")
-          }}
+          onClick={endCall}
         >
           <PhoneOff className="h-7 w-7" />
         </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-12 w-12 rounded-full"
-        >
-          <Video className="h-6 w-6" />
-        </Button>
       </div>
-    </div>
-  )
-}
-
-export function CallControls() {
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOff, setIsVideoOff] = useState(false)
-
-  return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant={isMuted ? "destructive" : "secondary"}
-        size="icon"
-        onClick={() => setIsMuted(!isMuted)}
-      >
-        {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-      </Button>
-      <Button
-        variant={isVideoOff ? "destructive" : "secondary"}
-        size="icon"
-        onClick={() => setIsVideoOff(!isVideoOff)}
-      >
-        {isVideoOff ? (
-          <VideoOff className="h-5 w-5" />
-        ) : (
-          <Video className="h-5 w-5" />
-        )}
-      </Button>
     </div>
   )
 }

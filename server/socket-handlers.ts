@@ -267,12 +267,11 @@ export function registerHandlers(io: Server) {
 
     socket.on(
       "call:start",
-      (payload: { conversationId: string; roomUrl: string }) => {
+      (payload: { conversationId: string }) => {
         socket
           .to(`conversation:${payload.conversationId}`)
           .emit("call:incoming", {
             conversationId: payload.conversationId,
-            roomUrl: payload.roomUrl,
             callerId: userId,
           });
       },
@@ -283,6 +282,43 @@ export function registerHandlers(io: Server) {
         conversationId: payload.conversationId,
       });
     });
+
+    // WebRTC signaling relay
+    socket.on(
+      "webrtc:offer",
+      (payload: { conversationId: string; sdp: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:offer", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:answer",
+      (payload: { conversationId: string; sdp: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:answer", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:ice-candidate",
+      (payload: { conversationId: string; candidate: RTCIceCandidateInit }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:ice-candidate", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:ready",
+      (payload: { conversationId: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:ready", payload);
+      },
+    );
 
     socket.on("disconnect", () => {
       console.log(`[socket] User ${userId} disconnected`);
