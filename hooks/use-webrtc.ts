@@ -15,6 +15,7 @@ interface UseWebRTCOptions {
 
 export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOptions) {
   const pcRef = useRef<RTCPeerConnection | null>(null)
+  const localStreamRef = useRef<MediaStream | null>(null)
   const onEndCallRef = useRef(onEndCall)
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
@@ -30,11 +31,15 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
 
     navigator.mediaDevices
       .getUserMedia(constraints)
-      .then(setLocalStream)
+      .then((stream) => {
+        localStreamRef.current = stream
+        setLocalStream(stream)
+      })
       .catch(async (err: DOMException) => {
         if (err.name === "NotFoundError") {
           try {
             const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            localStreamRef.current = audioOnly
             setLocalStream(audioOnly)
             setIsVideoOff(true)
             return
@@ -43,6 +48,7 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
           }
           try {
             const videoOnly = await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+            localStreamRef.current = videoOnly
             setLocalStream(videoOnly)
             setIsMuted(true)
             return
@@ -57,18 +63,22 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
             : `Camera/microphone error: ${err.message}`
         console.error("Failed to get media devices:", message)
         setMediaError(message)
+        // Proceed without local media — PC creation doesn't block on this
       })
   }, [])
 
   useEffect(() => {
-    if (!socket || !localStream) return
+    if (!socket) return
 
     const pc = new RTCPeerConnection(STUN_SERVERS)
     pcRef.current = pc
 
-    localStream.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream)
-    })
+    const stream = localStreamRef.current
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream)
+      })
+    }
 
     pc.ontrack = (event) => {
       setRemoteStream(event.streams[0])
@@ -86,19 +96,27 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
 
     const handleOffer = async (data: { conversationId: string; sdp: string }) => {
       if (data.conversationId !== conversationId) return
-      await pc.setRemoteDescription(
-        new RTCSessionDescription({ type: "offer", sdp: data.sdp }),
-      )
-      const answer = await pc.createAnswer()
-      await pc.setLocalDescription(answer)
-      socket.emit("webrtc:answer", { conversationId, sdp: answer.sdp })
+      try {
+        await pc.setRemoteDescription(
+          new RTCSessionDescription({ type: "offer", sdp: data.sdp }),
+        )
+        const answer = await pc.createAnswer()
+        await pc.setLocalDescription(answer)
+        socket.emit("webrtc:answer", { conversationId, sdp: answer.sdp })
+      } catch (err) {
+        console.error("Failed to handle offer:", err)
+      }
     }
 
     const handleAnswer = async (data: { conversationId: string; sdp: string }) => {
       if (data.conversationId !== conversationId) return
-      await pc.setRemoteDescription(
-        new RTCSessionDescription({ type: "answer", sdp: data.sdp }),
-      )
+      try {
+        await pc.setRemoteDescription(
+          new RTCSessionDescription({ type: "answer", sdp: data.sdp }),
+        )
+      } catch (err) {
+        console.error("Failed to handle answer:", err)
+      }
     }
 
     const handleIceCandidate = async (
@@ -115,6 +133,10 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
     const handlePeerReady = async (data: { conversationId: string }) => {
       if (data.conversationId !== conversationId) return
       if (isCaller) {
+        if (!localStreamRef.current) {
+          pc.addTransceiver("audio", { direction: "recvonly" })
+          pc.addTransceiver("video", { direction: "recvonly" })
+        }
         const offer = await pc.createOffer()
         await pc.setLocalDescription(offer)
         socket.emit("webrtc:offer", { conversationId, sdp: offer.sdp })
@@ -136,41 +158,47 @@ export function useWebRTC({ conversationId, isCaller, onEndCall }: UseWebRTCOpti
       socket.off("webrtc:ice-candidate", handleIceCandidate)
       socket.off("webrtc:ready", handlePeerReady)
       pc.close()
-      localStream.getTracks().forEach((t) => t.stop())
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((t) => t.stop())
+      }
       pcRef.current = null
     }
-  }, [socket, localStream, conversationId, isCaller])
+  }, [socket, conversationId, isCaller])
 
   useEffect(() => {
     onEndCallRef.current = onEndCall
   }, [onEndCall])
 
   const toggleMute = useCallback(() => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0]
+    const stream = localStreamRef.current
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0]
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled
         setIsMuted(!audioTrack.enabled)
       }
     }
-  }, [localStream])
+  }, [])
 
   const toggleVideo = useCallback(() => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0]
+    const stream = localStreamRef.current
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0]
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled
         setIsVideoOff(!videoTrack.enabled)
       }
     }
-  }, [localStream])
+  }, [])
 
   const endCall = useCallback(() => {
     pcRef.current?.close()
-    localStream?.getTracks().forEach((t) => t.stop())
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => t.stop())
+    }
     socket?.emit("call:end", { conversationId })
     onEndCallRef.current()
-  }, [socket, conversationId, localStream])
+  }, [socket, conversationId])
 
   return {
     localStream,

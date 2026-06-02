@@ -165,6 +165,17 @@ function SocketHandler() {
       useCallStore.getState().setIncomingCall(call)
     })
 
+    socket.on("call:active", (data: { conversationId: string; callerId: string; startedAt: string }) => {
+      const store = useCallStore.getState()
+      if (!store.activeCall && !store.incomingCall) {
+        store.setActiveCall({
+          conversationId: data.conversationId,
+          callerId: data.callerId,
+          startedAt: data.startedAt,
+        })
+      }
+    })
+
     socket.on("call:ended", (data: { conversationId: string }) => {
       const activeCall = useCallStore.getState().activeCall
       if (activeCall?.conversationId === data.conversationId) {
