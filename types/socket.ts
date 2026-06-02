@@ -18,8 +18,12 @@ export interface ClientToServerEvents {
   "message:delete": { messageId: string }
   "user:typing": { conversationId: string }
   "user:stop-typing": { conversationId: string }
-  "call:start": { conversationId: string; roomUrl: string }
+  "call:start": { conversationId: string }
   "call:end": { conversationId: string }
+  "webrtc:offer": { conversationId: string; sdp: string }
+  "webrtc:answer": { conversationId: string; sdp: string }
+  "webrtc:ice-candidate": { conversationId: string; candidate: RTCIceCandidateInit }
+  "webrtc:ready": { conversationId: string }
 }
 
 export interface ServerToClientEvents {
@@ -31,4 +35,9 @@ export interface ServerToClientEvents {
   "user:stop-typing": { userId: string; conversationId: string }
   "call:incoming": IncomingCall
   "call:ended": { conversationId: string }
+  "call:active": { conversationId: string; callerId: string; startedAt: string }
+  "webrtc:offer": { conversationId: string; sdp: string }
+  "webrtc:answer": { conversationId: string; sdp: string }
+  "webrtc:ice-candidate": { conversationId: string; candidate: RTCIceCandidateInit }
+  "webrtc:ready": { conversationId: string }
 }

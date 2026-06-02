@@ -1,12 +1,11 @@
 "use client"
 
 import { useAuthRedirect } from "@/hooks/use-auth-redirect"
-import { VideoCall, CallControls } from "@/components/call/video-call"
+import { VideoCall } from "@/components/call/video-call"
 import { useCallStore } from "@/stores/call-store"
-import { useGetRoom } from "@/hooks/use-call"
+import { useAuthStore } from "@/stores/auth-store"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
 
 export default function CallPage({
   params,
@@ -22,33 +21,24 @@ function CallPageInner({
   params: Promise<{ roomName: string }>
 }) {
   const { isAuthenticated } = useAuthRedirect()
-  const [roomName, setRoomName] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const { activeCall } = useCallStore()
-  const { mutate: getRoom, data: roomData, isPending, error } = useGetRoom()
+  const { user } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
     params.then(({ roomName }) => {
-      setRoomName(roomName)
-      getRoom(roomName)
+      setConversationId(roomName)
     })
-  }, [params, getRoom])
+  }, [params])
 
-  if (!isAuthenticated || !roomName) return null
+  if (!isAuthenticated || !conversationId) return null
 
-  if (isPending) {
-    return (
-      <div className="flex h-full items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    )
-  }
-
-  if (error || !roomData) {
+  if (!activeCall || activeCall.conversationId !== conversationId) {
     return (
       <div className="flex h-full items-center justify-center bg-black">
         <div className="text-center text-white">
-          <p className="mb-4 text-lg">Room not found or unavailable</p>
+          <p className="mb-4 text-lg">No active call found</p>
           <button
             className="rounded bg-white px-4 py-2 text-black"
             onClick={() => router.push("/messages")}
@@ -60,7 +50,13 @@ function CallPageInner({
     )
   }
 
+  const isCaller = activeCall.callerId === user?.id
+
   return (
-    <VideoCall roomName={roomName} roomUrl={roomData.roomUrl} />
+    <VideoCall
+      conversationId={conversationId}
+      isCaller={isCaller}
+      displayName={user?.displayName ?? "User"}
+    />
   )
 }

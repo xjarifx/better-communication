@@ -17,7 +17,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getConversationDisplayName, getInitials } from "@/lib/utils";
 import { ArrowLeft, Phone, PhoneIncoming, MoreVertical, MessageCircle, Users } from "lucide-react";
-import { useCreateRoom } from "@/hooks/use-call";
 import { useSocketStore } from "@/stores/socket-store";
 import { useCallStore } from "@/stores/call-store";
 import { useRouter } from "next/navigation";
@@ -30,8 +29,7 @@ export function ConversationDetail() {
     selectedConversationId,
   );
   const { socket } = useSocketStore();
-  const { conversationCalls, setConversationCall, setActiveCall } = useCallStore();
-  const { mutate: createRoom, isPending: isCreatingRoom } = useCreateRoom();
+  const { activeCall, setActiveCall } = useCallStore();
 
   if (!selectedConversationId) {
     return (
@@ -81,28 +79,16 @@ export function ConversationDetail() {
   const displayName = getConversationDisplayName(conversation, user?.id ?? "");
 
   const handleStartCall = () => {
-    createRoom(conversation.id, {
-      onSuccess: (data) => {
-        setConversationCall(conversation.id, {
-          roomUrl: data.roomUrl,
-          roomName: data.roomName,
-        });
-        setActiveCall({
-          conversationId: conversation.id,
-          roomUrl: data.roomUrl,
-          roomName: data.roomName,
-          startedAt: new Date().toISOString(),
-        });
-        socket?.emit("call:start", {
-          conversationId: conversation.id,
-          roomUrl: data.roomUrl,
-        });
-        router.push(`/call/${data.roomName}`);
-      },
+    setActiveCall({
+      conversationId: conversation.id,
+      startedAt: new Date().toISOString(),
+      callerId: user?.id ?? "",
     });
+    socket?.emit("call:start", {
+      conversationId: conversation.id,
+    });
+    router.push(`/call/${conversation.id}`);
   };
-
-  const activeConversationCall = conversationCalls[conversation.id] ?? null;
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
@@ -135,12 +121,12 @@ export function ConversationDetail() {
               : "Active now"}
           </p>
         </div>
-        {activeConversationCall ? (
+        {activeCall && activeCall.conversationId === conversation.id ? (
           <Button
             variant="ghost"
             size="icon"
             className="text-green-600 hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
-            onClick={() => router.push(`/call/${activeConversationCall.roomName}`)}
+            onClick={() => router.push(`/call/${conversation.id}`)}
           >
             <PhoneIncoming className="h-5 w-5" />
           </Button>
@@ -150,7 +136,6 @@ export function ConversationDetail() {
             size="icon"
             className="text-primary hover:bg-accent h-9 w-9 rounded-full sm:h-10 sm:w-10"
             onClick={handleStartCall}
-            disabled={isCreatingRoom}
           >
             <Phone className="h-5 w-5" />
           </Button>

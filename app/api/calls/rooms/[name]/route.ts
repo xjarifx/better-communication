@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { authenticate } from "../../../../../lib/auth";
-import { getJitsiRoom } from "../../../../../lib/jitsi";
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +12,5 @@ export async function GET(
 
   const { name } = await params;
 
-  const result = getJitsiRoom(name);
-
-  return Response.json(result);
+  return Response.json({ conversationId: name, active: true });
 }

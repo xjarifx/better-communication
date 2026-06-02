@@ -211,14 +211,82 @@ NODE_ENV              "development" | "production" | "test"
 | **Consequence** | Users may need to log in more frequently; can add refresh tokens post-MVP if UX becomes a problem                                                                                  |
 | **Alternative** | OAuth2 with refresh tokens — more standard but over-engineered for MVP                                                                                                             |
 
-### ADR-003: Jitsi Meet for Video (Self-Hosted Alternative)
+### ADR-003: P2P WebRTC via Socket.IO Signaling (Replaces Jitsi)
 
-| Field           | Value                                                                                                                                                                                                                                                |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Context**     | Need video calling capability                                                                                                                                                                                                                        |
-| **Decision**    | Embed Jitsi Meet via iframe (public meet.jit.si)                                                                                                                                                                                                     |
-| **Rationale**   | WebRTC requires STUN/TURN server management, signaling, ICE negotiation, and complex state management. Jitsi abstracts all of this. Embedding via iframe requires zero API keys or server setup. Room names generated client-side with UUID prefix. |
-| **Consequence** | Relies on Jitsi's public infrastructure — acceptable for MVP/demo. Can self-host Jitsi Meet server or migrate to LiveKit/WebRTC later.                                                                                                                |
+| Field           | Value                                                                                                                                                                                                                                                                 |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need video calling capability                                                                                                                                                                                                                                         |
+| **Decision**    | Direct P2P WebRTC with STUN for NAT traversal. Signaling relayed over the existing Socket.IO infrastructure (`conversation:<id>` rooms).                                                             |
+| **Rationale**   | Removes dependency on Jitsi's public infrastructure. No API keys, no third-party iframe. Signaling reuses the proven Socket.IO layer already used for messages and presence.                             |
+| **Consequence** | No TURN server configured — peers behind symmetric NATs will not connect. STUN only (`stun.l.google.com:19302`). Can add TURN (coturn) or migrate to SFU (LiveKit/Mediasoup) later if P2P fails for users. |
+
+### WebRTC Signaling Flow
+
+The caller and callee exchange SDP and ICE candidates through Socket.IO events:
+
+1. **Caller** navigates to `/call/<conversationId>` → `useWebRTC` hook sets up `RTCPeerConnection` with STUN → waits for `webrtc:ready` from callee.
+2. **Callee** accepts → navigates to same URL → hook sets up PC → emits `webrtc:ready`.
+3. **Caller** receives `webrtc:ready` → creates SDP offer → sends `webrtc:offer`.
+4. **Callee** receives `webrtc:offer` → sets remote description → creates SDP answer → sends `webrtc:answer`.
+5. **Both** exchange ICE candidates via `webrtc:ice-candidate` as they're gathered.
+
+All events are relayed by the server via `socket.to(conversation:<id>)` — no server-side state or media processing.
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `hooks/use-webrtc.ts` | Core hook — creates `RTCPeerConnection`, manages media streams, handles signaling events. Returns `{ localStream, remoteStream, isMuted, isVideoOff, isConnected, toggleMute, toggleVideo, endCall }`. |
+| `components/call/video-call.tsx` | UI — renders local/remote video elements, mute/video toggle buttons, and hang-up button. |
+| `server/socket-handlers.ts` | Relays `webrtc:offer`, `webrtc:answer`, `webrtc:ice-candidate`, `webrtc:ready` to conversation room. |
+| `types/socket.ts` | TypeScript types for all WebRTC signaling events. |
+| `stores/call-store.ts` | Zustand store for `activeCall` (tracks conversationId, startedAt, callerId) and `incomingCall`. |
+
+### Future Considerations
+
+- **TURN support**: Add a TURN server (coturn) for symmetric NAT traversal. Add `iceServers` entry in `hooks/use-webrtc.ts`.
+- **SFU migration**: Replace P2P with LiveKit or Mediasoup when group calls are needed (WebRTC P2P doesn't scale beyond 2-4 peers).
+- **Screen share**: Add `getDisplayMedia` + new `RTCRtpSender` track in the hook.
+- **Call state persistence**: `activeCall` is ephemeral (Zustand only) — lost on page refresh. Could persist to localStorage or the server.<｜end▁of▁thinking｜>
+
+<｜｜DSML｜｜parameter name="newString" string="true">### ADR-003: P2P WebRTC via Socket.IO Signaling (Replaces Jitsi)
+
+| Field           | Value                                                                                                                                                                                                                                                                 |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Context**     | Need video calling capability                                                                                                                                                                                                                                         |
+| **Decision**    | Direct P2P WebRTC with STUN for NAT traversal. Signaling relayed over the existing Socket.IO infrastructure (`conversation:<id>` rooms).                                                             |
+| **Rationale**   | Removes dependency on Jitsi's public infrastructure. No API keys, no third-party iframe. Signaling reuses the proven Socket.IO layer already used for messages and presence.                             |
+| **Consequence** | No TURN server configured — peers behind symmetric NATs will not connect. STUN only (`stun.l.google.com:19302`). Can add TURN (coturn) or migrate to SFU (LiveKit/Mediasoup) later if P2P fails for users. |
+
+### WebRTC Signaling Flow
+
+The caller and callee exchange SDP and ICE candidates through Socket.IO events:
+
+1. **Caller** navigates to `/call/<conversationId>` → `useWebRTC` hook sets up `RTCPeerConnection` with STUN → waits for `webrtc:ready` from callee.
+2. **Callee** accepts → navigates to same URL → hook sets up PC → emits `webrtc:ready`.
+3. **Caller** receives `webrtc:ready` → creates SDP offer → sends `webrtc:offer`.
+4. **Callee** receives `webrtc:offer` → sets remote description → creates SDP answer → sends `webrtc:answer`.
+5. **Both** exchange ICE candidates via `webrtc:ice-candidate` as they're gathered.
+
+All events are relayed by the server via `socket.to(conversation:<id>)` — no server-side state or media processing.
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `hooks/use-webrtc.ts` | Core hook — creates `RTCPeerConnection`, manages media streams, handles signaling events. Returns `{ localStream, remoteStream, isMuted, isVideoOff, isConnected, toggleMute, toggleVideo, endCall }`. |
+| `components/call/video-call.tsx` | UI — renders local/remote video elements, mute/video toggle buttons, and hang-up button. |
+| `server/socket-handlers.ts` | Relays `webrtc:offer`, `webrtc:answer`, `webrtc:ice-candidate`, `webrtc:ready` to conversation room. |
+| `types/socket.ts` | TypeScript types for all WebRTC signaling events. |
+| `stores/call-store.ts` | Zustand store for `activeCall` (tracks conversationId, startedAt, callerId) and `incomingCall`. |
+
+### Future Considerations
+
+- **TURN support**: Add a TURN server (coturn) for symmetric NAT traversal. Add `iceServers` entry in `hooks/use-webrtc.ts`.
+- **SFU migration**: Replace P2P with LiveKit or Mediasoup when group calls are needed (WebRTC P2P doesn't scale beyond 2-4 peers).
+- **Screen share**: Add `getDisplayMedia` + new `RTCRtpSender` track in the hook.
+- **Call state persistence**: `activeCall` is ephemeral (Zustand only) — lost on page refresh. Could persist to localStorage or the server.
+
 
 ### ADR-004: Cursor-Based Pagination for Messages
 

@@ -13,6 +13,7 @@ import { ApiError } from "@/lib/api-client"
 import { MessageCircle } from "lucide-react"
 
 export function LoginForm() {
+  console.log("[LoginForm] Component rendering")
   const router = useRouter()
   const { mutate: login, isPending, error } = useLogin()
   const {
@@ -23,7 +24,10 @@ export function LoginForm() {
     resolver: zodResolver(LoginFormSchema),
   })
 
+  console.log("[LoginForm] handleSubmit type:", typeof handleSubmit)
+
   const onSubmit = (data: LoginFormData) => {
+    console.log("[LoginForm] onSubmit called with data", { email: data.email })
     login(
       { email: data.email, password: data.password },
       {
@@ -32,6 +36,16 @@ export function LoginForm() {
         },
       },
     )
+  }
+
+  const handleClick = () => {
+    console.log("[LoginForm] Button clicked")
+    try {
+      handleSubmit(onSubmit)()
+      console.log("[LoginForm] handleSubmit completed")
+    } catch (err) {
+      console.error("[LoginForm] handleSubmit error:", err)
+    }
   }
 
   return (
@@ -43,7 +57,13 @@ export function LoginForm() {
         <CardTitle>Welcome back</CardTitle>
         <CardDescription>Sign in and continue your conversations</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            console.log("[LoginForm] Form onSubmit fired")
+            handleSubmit(onSubmit)(e)
+          }}
+        >
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -71,12 +91,18 @@ export function LoginForm() {
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
-          {error instanceof ApiError && (
-            <p className="text-sm text-destructive">{error.message}</p>
+          {error && (
+            <p className="text-sm text-destructive">
+              {error instanceof ApiError
+                ? error.message
+                : error instanceof Error
+                  ? error.message
+                  : "An unexpected error occurred. Check the console for details."}
+            </p>
           )}
         </CardContent>
         <CardFooter className="flex-col gap-4">
-          <Button type="submit" className="h-11 w-full rounded-xl" disabled={isPending}>
+          <Button type="button" className="h-11 w-full rounded-xl" disabled={isPending} onClick={handleClick}>
             {isPending ? "Signing in..." : "Sign In"}
           </Button>
           <p className="text-sm text-muted-foreground">

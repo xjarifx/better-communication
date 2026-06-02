@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { authenticate } from "../../../../lib/auth";
-import { createJitsiRoom } from "../../../../lib/jitsi";
 
 export async function POST(request: NextRequest) {
   const auth = authenticate(request);
@@ -17,7 +16,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = createJitsiRoom();
-
-  return Response.json(result, { status: 201 });
+  return Response.json({ conversationId: body.conversationId }, { status: 201 });
 }

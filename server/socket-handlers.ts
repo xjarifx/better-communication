@@ -11,8 +11,20 @@ import type { AccessTokenPayload } from "../lib/jwt";
 const TYPING_THROTTLE = 3000;
 const typingTimers = new Map<string, number>();
 
+const activeCalls = new Map<string, { callerId: string; startedAt: string }>();
+
 function getUserId(socket: Socket): string {
   return (socket.data.user as AccessTokenPayload).userId;
+}
+
+function sendActiveCall(socket: Socket, conversationId: string) {
+  const call = activeCalls.get(conversationId);
+  if (call) {
+    socket.emit("call:active", {
+      conversationId,
+      ...call,
+    });
+  }
 }
 
 export function registerHandlers(io: Server) {
@@ -50,6 +62,7 @@ export function registerHandlers(io: Server) {
           if (membership) {
             await socket.join(`conversation:${conversationId}`);
             console.log(`[join:conversations] User ${userId} joined room conversation:${conversationId}`);
+            sendActiveCall(socket, conversationId);
           } else {
             console.log(`[join:conversations] User ${userId} not a member of conversation ${conversationId}`);
           }
@@ -70,6 +83,7 @@ export function registerHandlers(io: Server) {
         const membership = await findMembership(payload.conversationId, userId);
         if (membership) {
           await socket.join(`conversation:${payload.conversationId}`);
+          sendActiveCall(socket, payload.conversationId);
         }
       },
     );
@@ -267,22 +281,61 @@ export function registerHandlers(io: Server) {
 
     socket.on(
       "call:start",
-      (payload: { conversationId: string; roomUrl: string }) => {
+      (payload: { conversationId: string }) => {
+        const call = { callerId: userId, startedAt: new Date().toISOString() };
+        activeCalls.set(payload.conversationId, call);
         socket
           .to(`conversation:${payload.conversationId}`)
           .emit("call:incoming", {
             conversationId: payload.conversationId,
-            roomUrl: payload.roomUrl,
             callerId: userId,
           });
       },
     );
 
     socket.on("call:end", (payload: { conversationId: string }) => {
+      activeCalls.delete(payload.conversationId);
       io.to(`conversation:${payload.conversationId}`).emit("call:ended", {
         conversationId: payload.conversationId,
       });
     });
+
+    // WebRTC signaling relay
+    socket.on(
+      "webrtc:offer",
+      (payload: { conversationId: string; sdp: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:offer", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:answer",
+      (payload: { conversationId: string; sdp: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:answer", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:ice-candidate",
+      (payload: { conversationId: string; candidate: RTCIceCandidateInit }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:ice-candidate", payload);
+      },
+    );
+
+    socket.on(
+      "webrtc:ready",
+      (payload: { conversationId: string }) => {
+        socket
+          .to(`conversation:${payload.conversationId}`)
+          .emit("webrtc:ready", payload);
+      },
+    );
 
     socket.on("disconnect", () => {
       console.log(`[socket] User ${userId} disconnected`);
