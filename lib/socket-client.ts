@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client"
-import { processMessageQueue, startQueueProcessing, stopQueueProcessing } from "./message-queue"
+import { startQueueProcessing, stopQueueProcessing } from "./message-queue"
 import { useSocketStore } from "@/stores/socket-store"
 import { useMessageQueueStore } from "@/stores/message-queue-store"
 import { refreshToken } from "./api-client"
@@ -17,7 +17,9 @@ export function initSocket(token: string): Socket {
     socket.disconnect()
   }
 
-  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:3001"
+  const port = process.env.NEXT_PUBLIC_SOCKET_PORT ?? "3001"
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost"
+  const socketUrl = `http://${hostname}:${port}`
   
   console.log(`[socket-client] Token details:`, {
     exists: !!token,

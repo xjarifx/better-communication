@@ -56,6 +56,7 @@ function CallPageInner({
     <VideoCall
       conversationId={conversationId}
       isCaller={isCaller}
+      displayName={user?.displayName ?? "User"}
     />
   )
 }
