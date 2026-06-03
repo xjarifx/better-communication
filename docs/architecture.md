@@ -19,23 +19,6 @@ Browser
 - **P2P WebRTC** with STUN for video calls. Signaling relayed over existing Socket.IO rooms — no third-party video service.
 - **Cursor-based pagination** for messages — stable under concurrent inserts and efficient with indexed queries.
 
-## Project Layout
-
-```
-app/             Next.js App Router pages & API routes
-server/          Standalone Socket.IO server
-modules/         Domain logic (auth, conversation, message)
-  ├── schema.ts      Zod validation
-  ├── repository.ts  Prisma queries
-  └── service.ts     Business logic
-components/      React components by feature
-hooks/           Custom React hooks
-stores/          Zustand state stores
-lib/             Shared utilities (prisma, jwt, api-client, etc.)
-prisma/          Database schema & migrations
-types/           TypeScript type definitions
-```
-
 ## Request Lifecycle
 
 **REST:** Route handler → module service → module repository → Prisma → PostgreSQL → response.
