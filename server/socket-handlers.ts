@@ -1,4 +1,5 @@
 import type { Server, Socket } from "socket.io";
+import * as Sentry from "@sentry/node";
 import { findMembership } from "../modules/conversation/repository";
 import {
   createMessage,
@@ -160,6 +161,7 @@ export function registerHandlers(io: Server) {
           console.log(`[message:send] Message ${message.id} broadcasted`);
           ack?.({ status: "ok", messageId: message.id });
         } catch (err) {
+          Sentry.captureException(err, { tags: { event: "message:send", userId } });
           ack?.({ status: "error", error: "Internal server error" });
         }
       },
@@ -213,6 +215,7 @@ export function registerHandlers(io: Server) {
           );
           ack?.({ status: "ok", message: fullMessage });
         } catch (err) {
+          Sentry.captureException(err, { tags: { event: "message:edit", userId } });
           ack?.({ status: "error", error: "Internal server error" });
         }
       },
@@ -247,6 +250,7 @@ export function registerHandlers(io: Server) {
 
           ack?.({ status: "ok" });
         } catch (err) {
+          Sentry.captureException(err, { tags: { event: "message:delete", userId } });
           ack?.({ status: "error", error: "Internal server error" });
         }
       },
