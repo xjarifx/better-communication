@@ -48,6 +48,22 @@ export function LoginForm() {
     }
   }
 
+  const DEMO_ACCOUNTS = [
+    { email: "jarif@gmail.com", label: "Demo Account 1" },
+    { email: "jarif2@gmail.com", label: "Demo Account 2" },
+  ]
+
+  const handleDemoLogin = (email: string) => {
+    login(
+      { email, password: email },
+      {
+        onSuccess: () => {
+          router.push("/messages")
+        },
+      },
+    )
+  }
+
   return (
     <Card className="w-full max-w-md border-0 bg-card/95 shadow-xl backdrop-blur">
       <CardHeader className="items-center text-center">
@@ -105,6 +121,29 @@ export function LoginForm() {
           <Button type="button" className="h-11 w-full rounded-xl" disabled={isPending} onClick={handleClick}>
             {isPending ? "Signing in..." : "Sign In"}
           </Button>
+          <div className="flex w-full flex-col gap-2">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Demo Accounts</span>
+              </div>
+            </div>
+            {DEMO_ACCOUNTS.map((account, i) => (
+              <Button
+                key={account.email}
+                type="button"
+                variant="default"
+                size="sm"
+                disabled={isPending}
+                onClick={() => handleDemoLogin(account.email)}
+                className="bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400/40 hover:bg-emerald-500 hover:shadow-lg active:scale-[0.98]"
+              >
+                Try {account.label}
+              </Button>
+            ))}
+          </div>
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <a href="/register" className="text-primary underline-offset-4 hover:underline">
